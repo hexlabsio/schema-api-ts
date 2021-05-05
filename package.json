@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "jest --ci --runInBand --coverage --reporters=default --reporters=jest-junit",
+    "test": "jest --ci --runInBand --coverage --reporters=default --reporters=jest-junit --passWithNoTests",
     "lint": "eslint **/*.ts"
   },
   "eslintConfig": {
