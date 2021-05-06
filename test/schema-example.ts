@@ -13,7 +13,7 @@ const accountServiceSpec: OAS = {
         parameters: [
           { in: "path", required: true, name: 'accountId', schema: { type: 'string'}}
         ],
-        responses: { '200': { '$ref': '#/components/responses/AccountSuccess' }},
+        responses: { '200': { '$ref': '#/components/responses/AccountSuccess' }, '404': { '$ref': '#/components/responses/NotBuiltYet' }},
       },
       patch: {
         parameters: [

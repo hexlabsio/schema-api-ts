@@ -1,10 +1,10 @@
 import { PathInfo} from "@hexlabs/kloudformation-ts/dist/kloudformation/modules/api";
 
-import {OAS, OASPath} from "./oas";
+import {OAS, OASOperation, OASPath} from "./oas";
 
 
 export class Method {
-  constructor(public readonly method: string) {}
+  constructor(public readonly method: string, public readonly statusCodes: string[] = []) {}
 
   routerDefinition(parentNames: string, parameters: string[]): [string, string[]] {
     const name = `${this.method}${parentNames}Handler`;
@@ -19,7 +19,7 @@ export class Path {
   append(route: string[], path: OASPath): this {
     if (route.length === 0) {
       const methods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
-      Object.keys(path).filter(it => methods.includes(it)).forEach(method => this.methods.push(new Method(method)));
+      Object.keys(path).filter(it => methods.includes(it)).forEach(method => this.methods.push(new Method(method, Object.keys(((path as any)[method] as OASOperation).responses))));
     } else {
       const [root, ...rest] = route;
       const existing = this.paths.find(it => it.part === root);
@@ -65,8 +65,8 @@ export class Path {
     const idFunction = `get${nextParentNames}Uri(${nextParameters.map(it => `${it}: string`).join(', ')}): string {
     return ${'`/'}${ids.join('/')}${'`'};
 }`;
-    const operationsFunction = `get${nextParentNames}Operations(): string[] {
-    return [${this.methods.map(method => "'" + method.method.toUpperCase() + "'").join(', ')}];
+    const operationsFunction = `get${nextParentNames}Operations(): Array<{method: string, statusCodes: number[]}> {
+    return [\n${this.methods.map(method => `{ method: '${method.method.toUpperCase()}', statusCodes: [${method.statusCodes.join(',')}] }`).join(',\n')}];
 }`;
     return [`bind('/${this.part}', router([\n${[...methodBinds, ...resourceBinds].join(',\n')}\n]))`, methods, [...idFunctions, idFunction, operationsFunction]];
   }
