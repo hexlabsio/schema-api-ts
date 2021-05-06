@@ -6,9 +6,10 @@ import {OAS, OASPath} from "./oas";
 export class Method {
   constructor(public readonly method: string) {}
 
-  routerDefinition(parentNames: string): [string, string[]] {
+  routerDefinition(parentNames: string, parameters: string[]): [string, string[]] {
     const name = `${this.method}${parentNames}Handler`;
-    return [`bind(HttpMethod.${this.method.toUpperCase()}, (...args) => this.${name}(...args))`, [name]];
+    const handlerType = parameters.length === 0 ? 'Handler': `HandlerWithParams<{${parameters.map(param => `${param}?: string;`).join(', ')}}>`;
+    return [`bind(HttpMethod.${this.method.toUpperCase()}, (...args) => this.${name}(...args))`, [name + `: ${handlerType}`]];
   }
 }
 export class Path {
@@ -54,7 +55,7 @@ export class Path {
     const nextParentNames = parentNames + this.name();
     const nextParameters = this.part.startsWith('{') ? [...parameters, this.part.substring(1, this.part.length-1)] : parameters;
     const nextParentParts = [...parentParts, this.part];
-    const methodDefinitions = this.methods.map(method => method.routerDefinition(nextParentNames));
+    const methodDefinitions = this.methods.map(method => method.routerDefinition(nextParentNames, nextParameters));
     const resourceDefinitions = this.paths.map(path => path.routerDefinition(nextParentNames, nextParentParts, nextParameters));
     const methodBinds = methodDefinitions.map(it => it[0]);
     const resourceBinds = resourceDefinitions.map(it => it[0]);
@@ -103,10 +104,10 @@ export class PathFinder {
    */
   apiDefinition(): string {
     const [router, methods, idFunctions] = this.routerDefinition();
-    return `//@ts-ignore\nimport {Api, bind, Handler, HttpMethod, lookup, route, router} from '@hexlabs/apigateway-ts';
+    return `//@ts-ignore\nimport {Api, bind, Handler, HandlerWithParams, HttpMethod, lookup, route, router} from '@hexlabs/apigateway-ts';
 export class ${this.apiName} {
    handle = ${router};
-   ${methods.map(method => `${method}: Handler = async () => ({ statusCode: 501, body: 'Not Implemented' });`).join('\n')}
+   ${methods.map(method => `${method} = async () => ({ statusCode: 501, body: 'Not Implemented' });`).join('\n')}
    ${idFunctions.join('\n')}
 }`
   }
@@ -117,20 +118,3 @@ export class ${this.apiName} {
     }, new PathFinder(openapi.info.title.replace(/\W+/g, '')))
   }
 }
-//
-// (async () => {
-//   const pathFinder = PathFinder.from(accountServiceSpec.paths);
-//   Template.create(aws => {
-//     Api.create(aws, 'klouds-test', 'dev').apiFrom(pathFinder.pathInfo());
-//   });
-//   const fakeSchema: JSONSchema = {
-//     anyOf: Object.keys(accountServiceSpec.components?.schemas ?? {}).map(it => ({'$ref': '#/components/schemas/' + it})),
-//     components: { schemas: accountServiceSpec.components?.schemas }
-//   }
-//   const ts = await compile(fakeSchema, '__ALL__');
-//
-//   console.log(JSON.stringify(pathFinder, null, 2));
-//
-//   console.log(pathFinder.apiDefinition());
-//   console.log(ts);
-// })();
