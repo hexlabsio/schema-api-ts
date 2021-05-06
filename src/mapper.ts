@@ -104,9 +104,9 @@ export class PathFinder {
   apiDefinition(): string {
     const [router, methods, idFunctions] = this.routerDefinition();
     return `//@ts-ignore\nimport {Api, bind, Handler, HttpMethod, lookup, route, router} from '@hexlabs/apigateway-ts';
-export abstract class ${this.apiName} {
+export class ${this.apiName} {
    handle = ${router};
-   ${methods.map(method => `abstract ${method}: Handler;`).join('\n')}
+   ${methods.map(method => `${method}: Handler = async () => ({ statusCode: 501, body: 'Not Implemented' });`).join('\n')}
    ${idFunctions.join('\n')}
 }`
   }
