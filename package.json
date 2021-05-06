@@ -6,6 +6,13 @@
   "bin": {
     "schema-api-ts": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "test": "jest --ci --runInBand --coverage --reporters=default --reporters=jest-junit --passWithNoTests",
@@ -70,6 +77,7 @@
   "devDependencies": {
     "@hexlabs/apigateway-ts": "^1.1.10",
     "@hexlabs/kloudformation-ts": "^1.1.140",
+    "@hexlabs/schema-api-ts": "^1.1.1",
     "@types/aws-lambda": "^8.10.40",
     "@types/jest": "^24.9.1",
     "@types/node": "^12.12.14",
