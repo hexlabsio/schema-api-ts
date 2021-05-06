@@ -1,4 +1,4 @@
-import {Schema} from "./schema";
+import {JSONSchema} from 'json-schema-to-typescript'
 
 export interface OAS {
   openapi: string;
@@ -12,7 +12,7 @@ export interface OAS {
 }
 
 export interface OASComponents {
-  schemas?: { [key: string]: Schema | OASRef };
+  schemas?: { [key: string]: JSONSchema };
   responses?: { [key: string]: OASResponse | OASRef };
   parameters?: { [key: string]: OASParameter | OASRef };
   examples?: { [key: string]: any | OASRef };
@@ -127,14 +127,14 @@ export interface OASParameter {
   style?: string;
   explode?: boolean;
   allowReserved?: boolean;
-  schema?: Schema | OASRef;
+  schema?: JSONSchema;
   example?: any;
   examples?: { [key: string]: any };
   content?: { [key: string]: OASMedia };
 }
 
 export interface OASMedia {
-  schema?: Schema | OASRef;
+  schema?: JSONSchema;
   example?: any;
   examples?: { [key: string]: any };
   encoding?: { [key: string]: OASEncoding };
@@ -147,5 +147,3 @@ export interface OASEncoding {
   explode?: boolean;
   allowReserved?: boolean;
 }
-
-

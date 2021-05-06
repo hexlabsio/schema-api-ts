@@ -1,16 +1,16 @@
 {
   "name": "@hexlabs/schema-api-ts",
-  "sideEfects": false,
+  "description": "Generate AWS Stacks, APIs and Types from OpenAPI",
+  "license": "Apache-2.0",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "bin": {
+    "schema-api-ts": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "test": "jest --ci --runInBand --coverage --reporters=default --reporters=jest-junit --passWithNoTests",
-    "lint": "eslint **/*.ts"
+    "lint": "eslint **/*.ts",
+    "run": "ts-node src/mapper.ts"
   },
   "eslintConfig": {
     "extends": [
@@ -68,6 +68,8 @@
   },
   "homepage": "https://github.com/hexlabsio/schema-api-ts#readme",
   "devDependencies": {
+    "@hexlabs/apigateway-ts": "^1.1.10",
+    "@hexlabs/kloudformation-ts": "^1.1.140",
     "@types/aws-lambda": "^8.10.40",
     "@types/jest": "^24.9.1",
     "@types/node": "^12.12.14",
@@ -80,5 +82,10 @@
     "jest-junit": "^10.0.0",
     "ts-jest": "^26.1.1",
     "typescript": "^3.7.3"
+  },
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "commander": "^6.2.1",
+    "json-schema-to-typescript": "^10.1.4"
   }
 }
