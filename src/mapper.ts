@@ -35,7 +35,7 @@ export class Path {
   pathInfo(): { [key: string]: PathInfo } {
     return {
       ['/' + this.part]: {
-        methods: this.methods.map(method => method.method),
+        methods: this.methods.map(method => method.method.toUpperCase()),
         paths: this.paths.reduce((paths, path) => ({...paths, ...path.pathInfo()}), {})
       }
     }
