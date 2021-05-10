@@ -8,7 +8,7 @@ export class Method {
 
   routerDefinition(parentNames: string, parameters: string[]): [string, string[]] {
     const name = `${this.method}${parentNames}Handler`;
-    const handlerType = parameters.length === 0 ? 'Handler': `HandlerWithParams<{${parameters.map(param => `${param}?: string;`).join(', ')}}>`;
+    const handlerType = parameters.length === 0 ? 'Handler': `HandlerWithParams<{${parameters.map(param => `${param}?: string;`).join(' ')}}>`;
     return [`bind(HttpMethod.${this.method.toUpperCase()}, (...args) => this.${name}(...args))`, [name + `: ${handlerType}`]];
   }
 }
