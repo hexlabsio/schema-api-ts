@@ -10,7 +10,7 @@ export class Method {
   routerDefinition(parentNames: string, pathParameters: string[]): [string, string[]] {
     const name = `${this.method}${parentNames}Handler`;
     const mapType = (parameters: string[]) => `{${parameters.map(param => `${param}?: string;`).join(' ')}}`;
-    const handlerType = pathParameters.length === 0 ? 'Handler' : `HandlerWithParams<${mapType(pathParameters)}, {${mapType(this.queryParams)}}>`;
+    const handlerType = pathParameters.length === 0 ? 'Handler' : `HandlerWithParams<${mapType(pathParameters)}, ${mapType(this.queryParams)}>`;
     return [`bind(HttpMethod.${this.method.toUpperCase()}, (...args) => this.${name}(...args))`, [name + `: ${handlerType}`]];
   }
 }
