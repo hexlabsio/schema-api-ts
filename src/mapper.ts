@@ -7,13 +7,13 @@ export class Method {
     public readonly queryParams: string[] = []) { }
 
 
-  routerDefinition(parentNames: string, pathParameters: string[]): [string, string[]] {
+  routerDefinition(spacing: string, parentNames: string, pathParameters: string[]): [string, string[]] {
     const name = `${this.method}${parentNames}Handler`;
     const mapType = (parameters: string[]) => `{${parameters.map(param => `${param}?: string;`).join(' ')}}`;
     const handlerType = pathParameters.length === 0 
       ? 'Handler' 
       : `HandlerWithParams<${mapType(pathParameters)}` + (this.queryParams.length === 0 ? '>' : `, ${mapType(this.queryParams)}>`);
-    return [`bind(HttpMethod.${this.method.toUpperCase()}, (...args) => this.${name}(...args))`, [name + `: ${handlerType}`]];
+    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, (...args) => this.${name}(...args))`, [name + `: ${handlerType}`]];
   }
 }
 
@@ -66,24 +66,25 @@ export class Path {
   /**
    * Maps to an api definition from @hexlabs/apigateway-ts
    */
-  routerDefinition(parentNames = '', parentParts: string[] = [], parameters: string[] = []): [string, string[], string[]] {
+  routerDefinition(spacing: string, parentNames = '', parentParts: string[] = [], parameters: string[] = []): [string, string[], string[]] {
     const nextParentNames = parentNames + this.name();
     const nextParameters = this.part.startsWith('{') ? [...parameters, this.part.substring(1, this.part.length - 1)] : parameters;
     const nextParentParts = [...parentParts, this.part];
-    const methodDefinitions = this.methods.map(method => method.routerDefinition(nextParentNames, nextParameters));
-    const resourceDefinitions = this.paths.map(path => path.routerDefinition(nextParentNames, nextParentParts, nextParameters));
+    const methodDefinitions = this.methods.map(method => method.routerDefinition(spacing + '  ', nextParentNames, nextParameters));
+    const resourceDefinitions = this.paths.map(path => path.routerDefinition(spacing + '  ', nextParentNames, nextParentParts, nextParameters));
     const methodBinds = methodDefinitions.map(it => it[0]);
     const resourceBinds = resourceDefinitions.map(it => it[0]);
     const idFunctions = resourceDefinitions.flatMap(it => it[2]);
     const methods = [...methodDefinitions.flatMap(it => it[1]), ...resourceDefinitions.flatMap(it => it[1])];
     const ids = nextParentParts.map(it => it.startsWith('{') ? ('${' + it.substring(1, it.length - 1) + '}') : it);
-    const idFunction = `get${nextParentNames}Uri(${nextParameters.map(it => `${it}: string`).join(', ')}): string {
-    return ${'`/'}${ids.join('/')}${'`'};
-}`;
-    const operationsFunction = `get${nextParentNames}Operations(): Array<{method: string, statusCodes: number[]}> {
-    return [\n${this.methods.map(method => `{ method: '${method.method.toUpperCase()}', statusCodes: [${method.statusCodes.join(',')}] }`).join(',\n')}];
-}`;
-    return [`bind('/${this.part}', router([\n${[...methodBinds, ...resourceBinds].join(',\n')}\n]))`, methods, [...idFunctions, idFunction, operationsFunction]];
+    //const backSpace = spacing.substring(3)
+    const idFunction = `    get${nextParentNames}Uri(${nextParameters.map(it => `${it}: string`).join(', ')}): string {
+      return ${'`/'}${ids.join('/')}${'`'};
+    }`;
+    const operationsFunction = `    get${nextParentNames}Operations(): Array<{method: string, statusCodes: number[]}> {
+      return [${this.methods.length === 0 ? '' : '\n'}${this.methods.map(method => `        { method: '${method.method.toUpperCase()}', statusCodes: [${method.statusCodes.join(',')}] }`).join(',\n')}${this.methods.length === 0 ? '' : '\n      '}];
+    }`;
+    return [`${spacing}bind('/${this.part}', router([\n${[...methodBinds, ...resourceBinds].join(',\n')}\n${spacing}]))`, methods, [...idFunctions, idFunction, operationsFunction]];
   }
 }
 
@@ -107,11 +108,11 @@ export class PathFinder {
   }
 
   private routerDefinition(): [string, string[], string[]] {
-    const definitions = this.paths.map(path => path.routerDefinition());
+    const definitions = this.paths.map(path => path.routerDefinition('      '));
     const binds = definitions.map(it => it[0]);
     const methods = definitions.flatMap(it => it[1]);
     const idFunctions = definitions.flatMap(it => it[2]);
-    return [`router([\n${binds.join(',\n')}\n])`, methods, idFunctions];
+    return [`router([\n${binds.join(',\n')}\n    ])`, methods, idFunctions];
   }
 
   /**
@@ -119,11 +120,13 @@ export class PathFinder {
    */
   apiDefinition(): string {
     const [router, methods, idFunctions] = this.routerDefinition();
-    return `//@ts-ignore\nimport {Api, bind, Handler, HandlerWithParams, HttpMethod, lookup, route, router} from '@hexlabs/apigateway-ts';
+    return `// eslint-disable-next-line @typescript-eslint/ban-ts-comment\n//@ts-ignore\nimport {Api, bind, Handler, HandlerWithParams, HttpMethod, lookup, route, router} from '@hexlabs/apigateway-ts';
 export class ${this.apiName} {
-   handle = ${router};
-   ${methods.map(method => `${method} = async () => ({ statusCode: 501, body: 'Not Implemented' });`).join('\n')}
-   ${idFunctions.join('\n')}
+    handle = ${router};
+    
+${methods.map(method => `    ${method} = async () => ({ statusCode: 501, body: 'Not Implemented' });`).join('\n')}
+
+${idFunctions.join('\n')}
 }`;
   }
 

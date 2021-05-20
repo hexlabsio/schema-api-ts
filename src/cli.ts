@@ -4,12 +4,14 @@ import {PathFinder} from "./mapper";
 import * as fs from 'fs';
 import {OAS} from "./oas";
 import chalk from 'chalk';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 require('ts-node').register({typeCheck: false});
 import { Command } from 'commander';
 
 const program = new Command();
 
 async function generateFromSchema(schemaLocation: string) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const schema: OAS = schemaLocation.endsWith('.ts') ? require(schemaLocation).default : require(schemaLocation);
   const pathFinder = PathFinder.from(schema);
   const apiDefinition = pathFinder.apiDefinition();
