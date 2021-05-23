@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "rootDir": ".",
     "baseUrl": ".",
     "outDir": "./dist",
     "noUnusedLocals": true,
@@ -22,8 +21,5 @@
   },
   "include": [
     "src/**/*",
-    "generated/**/*",
-    "stack/**/*.ts",
-    "test/**/*"
   ]
 }
