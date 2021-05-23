@@ -1,4 +1,4 @@
-import hydraSpec from "../dist/hydra";
+import hydraSpec from "../src/hydra";
 import {OAS} from "../src/oas";
 
 const accountServiceSpec: OAS = {

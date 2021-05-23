@@ -1,5 +1,5 @@
 import {JSONSchema} from "json-schema-to-typescript";
-import {OASParameter, OASPath, OASRef, OASRequestBody, OASResponse} from "../dist/oas";
+import {OASParameter, OASPath, OASRef, OASRequestBody, OASResponse} from "../src/oas";
 import {OAS, OASOperation} from "./oas";
 
 function capitilize(name: string): string {
