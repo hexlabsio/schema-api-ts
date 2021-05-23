@@ -7,8 +7,19 @@ import chalk from 'chalk';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('ts-node').register({typeCheck: false});
 import { Command } from 'commander';
+import {generateSdkFrom} from "./sdk-mapper";
 
 const program = new Command();
+
+export async function types(oas: OAS): Promise<string> {
+  const schemas = oas.components?.schemas ?? {};
+  const fakeSchema: JSONSchema = {
+    anyOf: Object.keys(schemas).map(it => ({'$ref': '#/components/schemas/' + it})),
+    components: { schemas }
+  }
+  const types = await compile(fakeSchema, '__ALL__', {bannerComment: ''});
+  return types.split('\n').filter(it => !it.includes('export type __ALL__')).join('\n');
+}
 
 async function generateFromSchema(schemaLocation: string) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -20,12 +31,9 @@ async function generateFromSchema(schemaLocation: string) {
   fs.writeFileSync(dir + 'api.ts', apiDefinition);
   const pathInfo = pathFinder.pathInfo();
   fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));
-  const fakeSchema: JSONSchema = {
-    anyOf: Object.keys(schema.components?.schemas ?? {}).map(it => ({'$ref': '#/components/schemas/' + it})),
-    components: { schemas: schema.components?.schemas }
-  }
-  const model = await compile(fakeSchema, '__ALL__');
-  fs.writeFileSync(dir + 'model.ts', model);
+  fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));
+  fs.writeFileSync(dir + 'model.ts', await types(schema));
+  fs.writeFileSync(dir + 'sdk.ts', generateSdkFrom(schema));
 }
 
 

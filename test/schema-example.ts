@@ -1,4 +1,4 @@
-import hydraSpec from "../src/hydra";
+import hydraSpec from "../dist/hydra";
 import {OAS} from "../src/oas";
 
 const accountServiceSpec: OAS = {
@@ -47,15 +47,14 @@ const accountServiceSpec: OAS = {
         description: '',
         content: {
           'application/json': {
-            schema: {
-              allOf: [{'$ref': '#/components/schemas/HydraResource'}, {'$ref': '#/components/schemas/Account'}]
-            }
+            schema: { '$ref': '#/components/schemas/AccountResource' }
           }
         }
       }
     },
     schemas: {
       ...hydraSpec,
+      AccountResource: { title: 'AccountResource', allOf: [{'$ref': '#/components/schemas/HydraResource'}, {'$ref': '#/components/schemas/Account'}] },
       Account: {
         type: 'object',
         title: 'Account',
@@ -69,6 +68,5 @@ const accountServiceSpec: OAS = {
       }
     }
   }
-};
-
+}
 export default accountServiceSpec;
