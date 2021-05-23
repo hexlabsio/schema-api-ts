@@ -140,7 +140,7 @@ export function generateSdkFrom(oas: OAS): string {
   });
   return `import { ${[...new Set([...imports])].join(', ')} } from './model';
 
-class ${name} {
+export class ${name} {
   constructor(
     private readonly caller: {
       call(
