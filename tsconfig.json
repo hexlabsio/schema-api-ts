@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
+    "rootDir": "src",
     "baseUrl": ".",
     "outDir": "./dist",
     "noUnusedLocals": true,
-    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "allowSyntheticDefaultImports": false,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
@@ -11,13 +13,12 @@
     "strictFunctionTypes": true,
     "allowJs": true,
     "moduleResolution": "node",
-    "target": "es2019",
+    "module": "commonjs",
+    "target": "ES2019",
     "pretty": true,
-    "strict": true,
-    "inlineSourceMap": true,
-    "inlineSources": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true
+    "inlineSourceMap": false,
+    "inlineSources": false,
+    "esModuleInterop": true
   },
   "include": [
     "src/**/*",
