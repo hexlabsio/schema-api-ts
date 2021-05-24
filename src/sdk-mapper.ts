@@ -63,8 +63,8 @@ function typeFrom(oas: OAS, response: OASResponse | OASRef): [string, string[]] 
   const ref = (def.content as any)[type].schema as OASRef;
   if(type === 'application/json') {
     const refValue = ref['$ref'];
-    const typeDef = traversePath<JSONSchema>(refValue, oas);
     if(refValue) {
+      const typeDef = traversePath<JSONSchema>(refValue, oas);
       const typeName = typeDef.title ?? refValue.substring(refValue.lastIndexOf('/') + 1);
       return [typeName, [typeName]]
     }
@@ -98,14 +98,18 @@ function bodyValue(oas: OAS, method: OASOperation): string {
   }).join(' else ');
 }
 
-function bodyFrom(oas: OAS, operation: OASOperation): string | undefined {
+function bodyFrom(oas: OAS, operation: OASOperation, imports: string[]): string | undefined {
   if(!operation.requestBody) return undefined;
   const bodyDefinition = Object.prototype.hasOwnProperty.call(operation.requestBody, '$ref') ? traversePath<OASRequestBody>((operation.requestBody as OASRef)['$ref'], oas) : operation.requestBody as OASRequestBody;
   const type = Object.keys(bodyDefinition.content ?? ['application/text'])[0];
   const ref = (bodyDefinition.content as any)[type].schema as OASRef;
   if(type === 'application/json') {
     const refValue = ref['$ref'];
-    if(refValue) return refValue.substring(refValue.lastIndexOf('/') + 1);
+    if(refValue){
+      const imp = refValue.substring(refValue.lastIndexOf('/') + 1);
+      imports.push(imp);
+      return imp;
+    }
     return 'unknown';
   }
   return 'string';
@@ -113,32 +117,33 @@ function bodyFrom(oas: OAS, operation: OASOperation): string | undefined {
 
 function sdkMethod(path: string, method: string, pathParameters: string[], oas: OAS, methodDefinition: OASOperation, imports: string[]): string {
   const pathParams = pathParamsParam(pathParameters);
-  const bodyParam = bodyFrom(oas, methodDefinition);
+  const bodyParam = bodyFrom(oas, methodDefinition, imports);
   const params = [pathParams, bodyParam && `body: ${bodyParam}`, 'queryParameters: Record<string, string> = {}', 'headers: Record<string, string> = {}'].filter(it => !!it);
   const resourcePath = path.replace(/{/g, '${params.');
   return `    async ${method}${pathName(path)}(${params.join(', ')}): Promise<(${returnType(oas, methodDefinition, imports)}) & {headers: Record<string, string>}>{
       const resource = '${path}';
       const path = \`${resourcePath}\`;
-      const result = await this.caller.call(resource, path, ${bodyParam ? 'body': 'undefined'}, ${pathParams ? 'params' : '{}'}, queryParameters, headers);
+      const result = await this.caller.call(resource, path, ${bodyParam ? 'JSON.stringify(body)': 'undefined'}, ${pathParams ? 'params' : '{}'}, queryParameters, headers);
       ${bodyValue(oas, methodDefinition)}
       throw new Error(\`Unknown status \${result.statusCode} returned from \${path}\`)
     }`;
 }
 
 export function generateSdkFrom(oas: OAS): string {
-  const name = oas.info.title.replace(/ /g, '') + 'Sdk';
-  const paths = pathsFrom(oas);
-  const imports = new Array<string>();
-  const sdkMethods = paths.flatMap(({path, definition}) => {
-    if (definition) {
-      return methodOperations(definition).map(({method, definition: operation}) => {
-        const parameters = operationParameters(oas, operation);
-        const pathParameters = parameters.filter(it => it.in === 'path').map(it => it.name);
-        return sdkMethod(path, method, pathParameters, oas, operation, imports);
-      });
-    } else return [];
-  });
-  return `import { ${[...new Set([...imports])].join(', ')} } from './model';
+  try {
+    const name = oas.info.title.replace(/ /g, '') + 'Sdk';
+    const paths = pathsFrom(oas);
+    const imports = new Array<string>();
+    const sdkMethods = paths.flatMap(({path, definition}) => {
+      if (definition) {
+        return methodOperations(definition).map(({method, definition: operation}) => {
+          const parameters = operationParameters(oas, operation);
+          const pathParameters = parameters.filter(it => it.in === 'path').map(it => it.name);
+          return sdkMethod(path, method, pathParameters, oas, operation, imports);
+        });
+      } else return [];
+    });
+    return `import { ${[...new Set([...imports])].join(', ')} } from './model';
 
 export class ${name} {
   constructor(
@@ -155,4 +160,8 @@ export class ${name} {
   ){}
 ${sdkMethods.join('\n\n')}
 }`
+  } catch(e) {
+    console.error(e);
+    throw e;
+  }
 }

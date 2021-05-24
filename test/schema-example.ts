@@ -1,72 +1,119 @@
-import hydraSpec from "../src/hydra";
-import {OAS} from "../src/oas";
+import {OAS} from '../src/oas';
 
-const accountServiceSpec: OAS = {
+const keyServiceSpec: OAS = {
   openapi: '3.0.0',
   info: {
-    title: 'Account Service API',
+    title: 'User Service API',
     version: '1.0',
   },
   paths: {
-    '/account/{accountId}': {
+    '/grant': {
+      post: {
+        requestBody: {
+          content: {
+            'application/json': { schema: { '$ref': '#/components/schemas/ViewAccess'}}
+          }
+        },
+        responses: { '201': { '$ref': '#/components/responses/Success' }},
+      }
+    },
+    '/user/{userId}': {
       get: {
         parameters: [
-          { in: "path", required: true, name: 'accountId', schema: { type: 'string'}}
+          { in: "path", required: true, name: 'userId', schema: { type: 'string'}}
         ],
-        responses: { '200': { '$ref': '#/components/responses/AccountSuccess' }, '404': { '$ref': '#/components/responses/NotBuiltYet' }},
+        responses: { '200': { '$ref': '#/components/responses/ViewAccessList' }},
+      }
+    },
+    '/view/{viewId}': {
+      get: {
+        parameters: [
+          { in: "path", required: true, name: 'viewId', schema: { type: 'string'}}
+        ],
+        responses: { '200': { '$ref': '#/components/responses/ViewAccessList' }},
       },
       patch: {
         parameters: [
-          { in: "path", required: true, name: 'accountId', schema: { type: 'string'}}
+          { in: "path", required: true, name: 'viewId', schema: { type: 'string'}}
         ],
-        responses: { '200': { '$ref': '#/components/responses/AccountSuccess' }}
-      },
-      delete: {
-        parameters: [
-          { in: "path", required: true, name: 'accountId', schema: { type: 'string'}}
-        ],
-        responses: { '501': { '$ref': '#/components/responses/NotBuiltYet' } }
+        requestBody: {
+          content: {
+            'application/json': { schema: { '$ref': '#/components/schemas/ViewAccessUpdate' } }
+          }
+        },
+        responses: { '200': { '$ref': '#/components/responses/Success' }},
       }
     },
-    '/account/status': {
-      get: {responses: { '501': { '$ref': '#/components/responses/NotBuiltYet' } } },
-      post: {responses: { '501': { '$ref': '#/components/responses/NotBuiltYet' } } }
+    '/revoke': {
+      post: {
+        requestBody: {
+          content: {
+            'application/json': { schema: { '$ref': '#/components/schemas/RevokeAccess'}}
+          }
+        },
+        responses: { '200': { '$ref': '#/components/responses/Success' }},
+      }
+    },
+    '/schema': {
+      get: {
+        responses: {
+          '200': {
+            description: 'Open API 3 Specification for this Service',
+            content: {'application/json': {schema: {type: 'object'}}}
+          }
+        }
+      }
     }
   },
   components: {
     responses: {
-      'NotBuiltYet': {
-        description: 'Not Built Yet',
-        content: {
-          'application/text': {
-            schema: { type: 'string' }
-          }
-        }
-      },
-      'AccountSuccess': {
+      'Success': {
         description: '',
         content: {
-          'application/json': {
-            schema: { '$ref': '#/components/schemas/AccountResource' }
-          }
+          'application/text': {schema: {type: 'string'}}
         }
-      }
+      },
+      'ViewAccessList': {
+        description: '',
+        content: {
+          'application/json': {schema: {type: 'array', items: { '$ref': '#/components/schemas/ViewAccess'}}}
+        }
+      },
     },
     schemas: {
-      ...hydraSpec,
-      AccountResource: { title: 'AccountResource', allOf: [{'$ref': '#/components/schemas/HydraResource'}, {'$ref': '#/components/schemas/Account'}] },
-      Account: {
+      ViewAccess: {
         type: 'object',
-        title: 'Account',
+        title: 'ViewAccess',
         additionalProperties: false,
-        required: ['awsAccountId', 'created', 'alias'],
+        required: ['viewId', 'user', 'awsAccountId', 'viewName'],
+        properties: {
+          viewId: {type: 'string'},
+          user: {type: 'string'},
+          awsAccountId: {type: 'string'},
+          viewName: {type: 'string'},
+          role: { type: 'string' }
+        }
+      },
+      ViewAccessUpdate: {
+        type: 'object',
+        title: 'ViewAccessUpdate',
+        additionalProperties: false,
         properties: {
           awsAccountId: {type: 'string'},
-          created: {type: 'string'},
-          alias: {type: 'string'}
+          viewName: {type: 'string'}
+        }
+      },
+      RevokeAccess: {
+        type: 'object',
+        title: 'RevokeAccess',
+        additionalProperties: false,
+        required: ['viewId'],
+        properties: {
+          viewId: {type: 'string'}
         }
       }
     }
   }
-}
-export default accountServiceSpec;
+};
+
+export default keyServiceSpec;
