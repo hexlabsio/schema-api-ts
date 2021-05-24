@@ -4,11 +4,13 @@ import { OAS, OASOperation, OASParameter, OASPath, OASRef } from "./oas";
 export class Method {
   constructor(public readonly method: string,
     public readonly statusCodes: string[] = [],
-    public readonly queryParams: string[] = []) { }
+    public readonly queryParams: string[] = [],
+    public readonly operationId?: string
+  ) { }
 
 
   routerDefinition(spacing: string, parentNames: string, pathParameters: string[]): [string, string[]] {
-    const name = `${this.method}${parentNames}Handler`;
+    const name = this.operationId ?? `${this.method}${parentNames}Handler`;
     const mapType = (parameters: string[]) => `{${parameters.map(param => `${param}?: string;`).join(' ')}}`;
     const handlerType = pathParameters.length === 0 
       ? 'Handler' 
@@ -30,10 +32,10 @@ export class Path {
       const queryParams = path?.get?.parameters
         ?.filter(p => isOASParam(p) && p.in === "query")
         ?.map(p => (p as OASParameter).name) ?? [];
-      Object.keys(path).filter(it => methods.includes(it)).forEach(method =>
-        this.methods.push(new Method(method,
-          Object.keys(((path as any)[method] as OASOperation).responses),
-          queryParams))
+      Object.keys(path).filter(it => methods.includes(it)).forEach(method => {
+          const definition = (path as any)[method] as OASOperation;
+          this.methods.push(new Method(method, Object.keys(definition.responses), queryParams, definition.operationId))
+        }
       );
     } else {
       const [root, ...rest] = route;

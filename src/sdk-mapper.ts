@@ -120,7 +120,8 @@ function sdkMethod(path: string, method: string, pathParameters: string[], oas: 
   const bodyParam = bodyFrom(oas, methodDefinition, imports);
   const params = [pathParams, bodyParam && `body: ${bodyParam}`, 'queryParameters: Record<string, string> = {}', 'headers: Record<string, string> = {}'].filter(it => !!it);
   const resourcePath = path.replace(/{/g, '${params.');
-  return `    async ${method}${pathName(path)}(${params.join(', ')}): Promise<(${returnType(oas, methodDefinition, imports)}) & {headers: Record<string, string>}>{
+  const methodName = methodDefinition.operationId ?? `${method}${pathName(path)}`;
+  return `    async ${methodName}(${params.join(', ')}): Promise<(${returnType(oas, methodDefinition, imports)}) & {headers: Record<string, string>}>{
       const resource = '${path}';
       const path = \`${resourcePath}\`;
       const result = await this.caller.call(resource, path, ${bodyParam ? 'JSON.stringify(body)': 'undefined'}, ${pathParams ? 'params' : '{}'}, queryParameters, headers);

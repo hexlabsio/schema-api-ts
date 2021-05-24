@@ -9,6 +9,7 @@ const keyServiceSpec: OAS = {
   paths: {
     '/grant': {
       post: {
+        operationId: 'grant',
         requestBody: {
           content: {
             'application/json': { schema: { '$ref': '#/components/schemas/ViewAccess'}}
