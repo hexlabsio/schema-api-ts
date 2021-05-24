@@ -57,6 +57,11 @@ function pathParamsParam(pathParameters: string[]): string | undefined {
   return `params: {${pathParameters.map(it => `${it}: string`).join('; ')}}`;
 }
 
+function headerParamsParam(headerParameters: string[]): string | undefined {
+  if(headerParameters.length === 0) return 'headers: Record<string, string>';
+  return `headers: Record<string, string> & Partial<{${headerParameters.map(it => `'${it}': string`).join('; ')}}>`;
+}
+
 function typeFrom(oas: OAS, response: OASResponse | OASRef): [string, string[]] {
   const def = Object.prototype.hasOwnProperty.call(response, '$ref') ? traversePath<OASResponse>((response as OASRef)['$ref'], oas) : response as OASResponse;
   const type = Object.keys(def.content ?? ['application/text'])[0];
@@ -115,10 +120,11 @@ function bodyFrom(oas: OAS, operation: OASOperation, imports: string[]): string 
   return 'string';
 }
 
-function sdkMethod(path: string, method: string, pathParameters: string[], oas: OAS, methodDefinition: OASOperation, imports: string[]): string {
+function sdkMethod(path: string, method: string, pathParameters: string[], queryParameters: string[], headerParameters: string[], oas: OAS, methodDefinition: OASOperation, imports: string[]): string {
   const pathParams = pathParamsParam(pathParameters);
+  const headerParams = headerParamsParam(headerParameters);
   const bodyParam = bodyFrom(oas, methodDefinition, imports);
-  const params = [pathParams, bodyParam && `body: ${bodyParam}`, 'queryParameters: Record<string, string> = {}', 'headers: Record<string, string> = {}'].filter(it => !!it);
+  const params = [pathParams, bodyParam && `body: ${bodyParam}`, 'queryParameters: Record<string, string> = {}', headerParams + ' = {}'].filter(it => !!it);
   const resourcePath = path.replace(/{/g, '${params.');
   const methodName = methodDefinition.operationId ?? `${method}${pathName(path)}`;
   return `    async ${methodName}(${params.join(', ')}): Promise<(${returnType(oas, methodDefinition, imports)}) & {headers: Record<string, string>}>{
@@ -140,7 +146,9 @@ export function generateSdkFrom(oas: OAS): string {
         return methodOperations(definition).map(({method, definition: operation}) => {
           const parameters = operationParameters(oas, operation);
           const pathParameters = parameters.filter(it => it.in === 'path').map(it => it.name);
-          return sdkMethod(path, method, pathParameters, oas, operation, imports);
+          const queryParameters = parameters.filter(it => it.in === 'query').map(it => it.name);
+          const headerParameters = parameters.filter(it => it.in === 'header').map(it => it.name);
+          return sdkMethod(path, method, pathParameters, queryParameters, headerParameters, oas, operation, imports);
         });
       } else return [];
     });
