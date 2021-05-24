@@ -1,58 +1,60 @@
 import {OAS} from '../src/oas';
 
-const keyServiceSpec: OAS = {
+const viewServiceSpec: OAS = {
   openapi: '3.0.0',
   info: {
-    title: 'User Service API',
+    title: 'View Service API',
     version: '1.0',
   },
   paths: {
-    '/grant': {
+    '/view': {
+      get: {
+        operationId: 'getViews',
+        responses: { '200': { '$ref': '#/components/responses/ViewsSuccess' }, '400': { '$ref': '#/components/responses/BadRequest' }},
+      },
       post: {
-        operationId: 'grant',
+        operationId: 'createView',
+        parameters: [
+          { in: "header", required: true, name: 'X-Encryption-Key', schema: { type: 'string'}}
+        ],
         requestBody: {
           content: {
-            'application/json': { schema: { '$ref': '#/components/schemas/ViewAccess'}}
+            'application/json': {
+              schema: {'$ref': '#/components/schemas/CreateViewRequest'}
+            }
           }
         },
-        responses: { '201': { '$ref': '#/components/responses/Success' }},
-      }
-    },
-    '/user/{userId}': {
-      get: {
-        parameters: [
-          { in: "path", required: true, name: 'userId', schema: { type: 'string'}}
-        ],
-        responses: { '200': { '$ref': '#/components/responses/ViewAccessList' }},
-      }
+        responses: { '201': { '$ref': '#/components/responses/ViewSuccess' }},
+      },
     },
     '/view/{viewId}': {
       get: {
+        operationId: 'getView',
         parameters: [
           { in: "path", required: true, name: 'viewId', schema: { type: 'string'}}
         ],
-        responses: { '200': { '$ref': '#/components/responses/ViewAccessList' }},
+        responses: { '200': { '$ref': '#/components/responses/ViewSuccess' }}
       },
       patch: {
+        operationId: 'updateView',
         parameters: [
           { in: "path", required: true, name: 'viewId', schema: { type: 'string'}}
         ],
         requestBody: {
           content: {
-            'application/json': { schema: { '$ref': '#/components/schemas/ViewAccessUpdate' } }
+            'PatchViewRequest': {
+              schema: {'$ref': '#/components/schemas/PatchViewRequest'}
+            }
           }
         },
-        responses: { '200': { '$ref': '#/components/responses/Success' }},
-      }
-    },
-    '/revoke': {
-      post: {
-        requestBody: {
-          content: {
-            'application/json': { schema: { '$ref': '#/components/schemas/RevokeAccess'}}
-          }
-        },
-        responses: { '200': { '$ref': '#/components/responses/Success' }},
+        responses: { '200': { '$ref': '#/components/responses/ViewSuccess' }}
+      },
+      delete: {
+        operationId: 'deleteView',
+        parameters: [
+          { in: "path", required: true, name: 'viewId', schema: { type: 'string'}}
+        ],
+        responses: { '200': { '$ref': '#/components/responses/DeleteSuccess' } }
       }
     },
     '/schema': {
@@ -68,53 +70,107 @@ const keyServiceSpec: OAS = {
   },
   components: {
     responses: {
-      'Success': {
+      'CreateViewRequest': {
         description: '',
         content: {
-          'application/text': {schema: {type: 'string'}}
+          'application/json': {
+            schema: {'$ref': '#/components/schemas/CreateView'}
+          }
         }
       },
-      'ViewAccessList': {
+      'PatchViewRequest': {
         description: '',
         content: {
-          'application/json': {schema: {type: 'array', items: { '$ref': '#/components/schemas/ViewAccess'}}}
+          'application/json': {
+            schema: {'$ref': '#/components/schemas/PatchView'}
+          }
+        }
+      },
+      'ViewsSuccess': {
+        description: '',
+        content: {
+          'application/json': {
+            schema: {
+              allOf: [{'$ref': '#/components/schemas/HydraCollection'}, { type: 'object', properties: { member: { type: 'array', items: {allOf: [{'$ref': '#/components/schemas/HydraResource'}, {'$ref': '#/components/schemas/View'}]} } } }]
+            }
+          }
+        }
+      },
+      'BadRequest': {
+        description: '',
+        content: {
+          'application/text': { schema: { type: 'string' } }
+        }
+      },
+      'ViewSuccess': {
+        description: '',
+        content: {
+          'application/json': {
+            schema: {
+              allOf: [{'$ref': '#/components/schemas/HydraResource'}, {'$ref': '#/components/schemas/View'}]
+            }
+          }
+        }
+      },
+      'DeleteSuccess': {
+        description: '',
+        content: {
+          'application/text': {
+            schema: { type: 'string' }
+          }
+        }
+      },
+      'SecretSuccess': {
+        description: '',
+        content: {
+          'application/json': {
+            schema: {  '$ref': '#/components/schemas/SecretSuccess' }
+          }
         }
       },
     },
     schemas: {
-      ViewAccess: {
+      CreateView: {
         type: 'object',
-        title: 'ViewAccess',
+        title: 'CreateView',
         additionalProperties: false,
-        required: ['viewId', 'user', 'awsAccountId', 'viewName'],
+        required: ['name', 'credentials'],
+        properties: {
+          name: {type: 'string'},
+          credentials: {type: 'string'}
+        }
+      },
+      PatchView: {
+        type: 'object',
+        title: 'PatchView',
+        anyOf: [
+          { type: 'object', required: ['name'], additionalProperties: false, properties: { name: {type: 'string' } } },
+          { type: 'object', required: ['credentials'], additionalProperties: false, properties: { credentials: {type: 'string' } } },
+          { type: 'object', required: ['name', 'credentials'], additionalProperties: false, properties: { credentials: {type: 'string' }, name: {type: 'string' }  } },
+        ]
+      },
+      View: {
+        type: 'object',
+        title: 'View',
+        additionalProperties: false,
+        required: ['viewId', 'viewName', 'awsAccountId'],
         properties: {
           viewId: {type: 'string'},
-          user: {type: 'string'},
-          awsAccountId: {type: 'string'},
           viewName: {type: 'string'},
-          role: { type: 'string' }
+          awsAccountId: {type: 'string'}
         }
       },
-      ViewAccessUpdate: {
+      SecretSuccess: {
         type: 'object',
-        title: 'ViewAccessUpdate',
+        title: 'SecretSuccess',
         additionalProperties: false,
+        required: ['credentials'],
         properties: {
-          awsAccountId: {type: 'string'},
-          viewName: {type: 'string'}
-        }
-      },
-      RevokeAccess: {
-        type: 'object',
-        title: 'RevokeAccess',
-        additionalProperties: false,
-        required: ['viewId'],
-        properties: {
-          viewId: {type: 'string'}
+          credentials: {type: 'string'}
         }
       }
     }
   }
 };
 
-export default keyServiceSpec;
+export default viewServiceSpec;

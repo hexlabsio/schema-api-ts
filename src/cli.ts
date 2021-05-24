@@ -17,8 +17,7 @@ export async function types(oas: OAS): Promise<string> {
     anyOf: Object.keys(schemas).map(it => ({'$ref': '#/components/schemas/' + it})),
     components: { schemas }
   }
-  const types = await compile(fakeSchema, '__ALL__', {bannerComment: ''});
-  return types.split('\n').filter(it => !it.includes('export type __ALL__')).join('\n');
+  return await compile(fakeSchema, '__ALL__', {bannerComment: ''});
 }
 
 async function generateFromSchema(schemaLocation: string) {
