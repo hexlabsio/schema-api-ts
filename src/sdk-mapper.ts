@@ -124,7 +124,7 @@ function sdkMethod(path: string, method: string, pathParameters: string[], oas: 
   return `    async ${methodName}(${params.join(', ')}): Promise<(${returnType(oas, methodDefinition, imports)}) & {headers: Record<string, string>}>{
       const resource = '${path}';
       const path = \`${resourcePath}\`;
-      const result = await this.caller.call(resource, path, ${bodyParam ? 'JSON.stringify(body)': 'undefined'}, ${pathParams ? 'params' : '{}'}, queryParameters, headers);
+      const result = await this.caller.call('${method.toUpperCase()}', resource, path, ${bodyParam ? 'JSON.stringify(body)': 'undefined'}, ${pathParams ? 'params' : '{}'}, queryParameters, headers);
       ${bodyValue(oas, methodDefinition)}
       throw new Error(\`Unknown status \${result.statusCode} returned from \${path}\`)
     }`;
@@ -146,18 +146,21 @@ export function generateSdkFrom(oas: OAS): string {
     });
     return `import { ${[...new Set([...imports])].join(', ')} } from './model';
 
+export type Caller = {
+  call(
+      method: string,
+      resource: string,
+      path: string,
+      body: string | undefined,
+      pathParameters: Record<string, string>,
+      queryParameters: Record<string, string>,
+      headers: Record<string, string>
+    ): Promise<{ statusCode: number; body: string; headers: Record<string, string> }>;
+  }
+
 export class ${name} {
   constructor(
-    private readonly caller: {
-      call(
-        resource: string,
-        path: string,
-        body: string | undefined,
-        pathParameters: Record<string, string>,
-        queryParameters: Record<string, string>,
-        headers: Record<string, string>
-      ): Promise<{ statusCode: number, body: string, headers: Record<string, string> }>
-    }
+    private readonly caller: Caller
   ){}
 ${sdkMethods.join('\n\n')}
 }`
