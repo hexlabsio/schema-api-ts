@@ -193,7 +193,10 @@ export class ${name} {
     private readonly caller: Caller
   ){}
 ${sdkMethods.join('\n\n')}
-}`;
+}
+
+export * from './model';
+`;
   } catch (e) {
     console.error(e);
     throw e;
