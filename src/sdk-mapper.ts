@@ -130,7 +130,7 @@ function bodyFrom(oas: OAS, operation: OASOperation, imports: string[]): string 
   return 'string';
 }
 
-function sdkMethod(path: string, method: string, pathParameters: string[], queryParameters: string[], headerParameters: string[], oas: OAS, methodDefinition: OASOperation, imports: string[]): string {
+function sdkMethod(version: string | undefined, path: string, method: string, pathParameters: string[], queryParameters: string[], headerParameters: string[], oas: OAS, methodDefinition: OASOperation, imports: string[]): string {
   const pathParams = pathParamsParam(pathParameters);
   const headerParams = headerParamsParam(headerParameters);
   const bodyParam = bodyFrom(oas, methodDefinition, imports);
@@ -139,17 +139,23 @@ function sdkMethod(path: string, method: string, pathParameters: string[], query
   const params = [pathParams, bodyParam && `body: ${bodyParam}`, queryParams, multiQueryParams, headerParams + ' = {}'].filter(it => !!it);
   const resourcePath = path.replace(/{/g, '${params.');
   const methodName = methodDefinition.operationId ?? `${method}${pathName(path)}`;
+  const versionCheck = `if(Object.prototype.hasOwnProperty.call(result.headers, 'X-API-VERSION')) {
+        const resultingVersion = result.headers['X-API-VERSION'];
+        if(resultingVersion !== '${version}') {
+          console.warn(\`Version returned from \${path} (\${resultingVersion}) does not match requested version ${version}\`);
+        }
+      }\n      `;
   return `    async ${methodName}(${params.join(', ')}): Promise<(${returnType(oas, methodDefinition, imports)}) & {headers: Record<string, string>}>{
       const resource = '${path}';
       const path = \`${resourcePath}\`;
-      const result = await this.caller.call('${method.toUpperCase()}', resource, path, 
-      ${bodyParam ? 'JSON.stringify(body)' : 'undefined'}, ${pathParams ? 'params' : '{}'}, ${queryParams ? 'queryParameters' : '{}'}, ${multiQueryParams ? 'multiQueryParameters' : '{}'}, headers);
-      ${bodyValue(oas, methodDefinition)}
+      const versionedHeaders = ${version ? `{...headers, ['X-API-VERSION']: '${version}' }` : 'headers'};
+      const result = await this.caller.call('${method.toUpperCase()}', resource, path, ${bodyParam ? 'JSON.stringify(body)' : 'undefined'}, ${pathParams ? 'params' : '{}'}, ${queryParams ? 'queryParameters' : '{}'}, ${multiQueryParams ? 'multiQueryParameters' : '{}'}, versionedHeaders);
+      ${version ? versionCheck : ''}${bodyValue(oas, methodDefinition)}
       throw new Error(\`Unknown status \${result.statusCode} returned from \${path}\`)
     }`;
 }
 
-export function generateSdkFrom(oas: OAS): string {
+export function generateSdkFrom(oas: OAS, version?: string): string {
   try {
     const name = oas.info.title.replace(/ /g, '') + 'Sdk';
     const paths = pathsFrom(oas);
@@ -161,7 +167,7 @@ export function generateSdkFrom(oas: OAS): string {
           const pathParameters = parameters.filter(it => it.in === 'path').map(it => it.name);
           const queryParameters = parameters.filter(it => it.in === 'query').map(it => it.name);
           const headerParameters = parameters.filter(it => it.in === 'header').map(it => it.name);
-          return sdkMethod(path, method, pathParameters, queryParameters, headerParameters, oas, operation, imports);
+          return sdkMethod(version, path, method, pathParameters, queryParameters, headerParameters, oas, operation, imports);
         });
       } else return [];
     });
