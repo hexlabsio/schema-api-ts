@@ -79,7 +79,7 @@ export class Path {
     const idFunctions = resourceDefinitions.flatMap(it => it[2]);
     const methods = [...methodDefinitions.flatMap(it => it[1]), ...resourceDefinitions.flatMap(it => it[1])];
     const ids = nextParentParts.map(it => it.startsWith('{') ? ('${' + it.substring(1, it.length - 1) + '}') : it);
-    //const backSpace = spacing.substring(3)
+    
     const idFunction = `    get${nextParentNames}Uri(${nextParameters.map(it => `${it}: string`).join(', ')}): string {
       return ${'`/'}${ids.join('/')}${'`'};
     }`;
@@ -120,10 +120,12 @@ export class PathFinder {
   /**
    * Maps to an api definition from @hexlabs/apigateway-ts
    */
-  apiDefinition(): string {
+  apiDefinition(version?: string): string {
     const [router, methods, idFunctions] = this.routerDefinition();
     return `// eslint-disable-next-line @typescript-eslint/ban-ts-comment\n//@ts-ignore\nimport {Api, bind, Handler, HandlerWithParams, HttpMethod, lookup, route, router} from '@hexlabs/apigateway-ts';
 export class ${this.apiName} {
+    ${version ? `version = '${version}';` : ''}
+    
     handle = ${router};
     
 ${methods.map(method => `    ${method} = async () => ({ statusCode: 501, body: 'Not Implemented' });`).join('\n')}
@@ -134,7 +136,7 @@ ${idFunctions.join('\n')}
 
   static from(openapi: OAS): PathFinder {
     return Object.keys(openapi.paths).reduce((pathFinder, path) => {
-      return pathFinder.append(path, openapi.paths[path] as OASPath); // TODO find path in case of ref
+      return pathFinder.append(path, openapi.paths[path] as OASPath);
     }, new PathFinder(openapi.info.title.replace(/\W+/g, '')));
   }
 }

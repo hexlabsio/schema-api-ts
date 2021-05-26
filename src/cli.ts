@@ -24,7 +24,9 @@ async function generateFromSchema(schemaLocation: string) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const schema: OAS = schemaLocation.endsWith('.ts') ? require(schemaLocation).default : require(schemaLocation);
   const pathFinder = PathFinder.from(schema);
-  const apiDefinition = pathFinder.apiDefinition();
+  const args = process.argv;
+  const version = args.find(it => it.startsWith('v='))?.substring(2);
+  const apiDefinition = pathFinder.apiDefinition(version);
   const dir = 'generated/' + schema.info.title.toLowerCase().replace(/ /g, '-') + '/';
   if(!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
   fs.writeFileSync(dir + 'api.ts', apiDefinition);
@@ -32,9 +34,7 @@ async function generateFromSchema(schemaLocation: string) {
   fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));
   fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));
   fs.writeFileSync(dir + 'model.ts', await types(schema));
-  const args = process.argv;
-  const version = args.find(it => it.startsWith('v='));
-  fs.writeFileSync(dir + 'sdk.ts', generateSdkFrom(schema, version?.substring(2)));
+  fs.writeFileSync(dir + 'sdk.ts', generateSdkFrom(schema, version));
 }
 
 

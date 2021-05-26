@@ -17,7 +17,7 @@
     "build": "tsc --project tsconfig.json",
     "test": "jest --ci --runInBand --coverage --reporters=default --reporters=jest-junit --passWithNoTests",
     "lint": "eslint **/*.ts",
-    "run": "ts-node src/cli.ts generate $(pwd)/test/schema-example.ts"
+    "run": "ts-node src/cli.ts generate $(pwd)/test/schema-example.ts v=1.0.0"
   },
   "eslintConfig": {
     "extends": [
