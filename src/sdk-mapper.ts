@@ -139,8 +139,10 @@ function sdkMethod(version: string | undefined, path: string, method: string, pa
   const params = [pathParams, bodyParam && `body: ${bodyParam}`, queryParams, multiQueryParams, headerParams + ' = {}'].filter(it => !!it);
   const resourcePath = path.replace(/{/g, '${params.');
   const methodName = methodDefinition.operationId ?? `${method}${pathName(path)}`;
-  const versionCheck = `if(Object.prototype.hasOwnProperty.call(result.headers, 'X-API-VERSION')) {
-        const resultingVersion = result.headers['X-API-VERSION'];
+  const versionCheck = `
+      const resultingVersionKey = Object.keys(result.headers ?? {}).find(it => it.toUpperCase() === 'X-API-VERSION');
+      if(resultingVersionKey) {
+        const resultingVersion = result.headers[resultingVersionKey];
         if(resultingVersion !== '${version}') {
           console.warn(\`Version returned from \${path} (\${resultingVersion}) does not match requested version ${version}\`);
         }
