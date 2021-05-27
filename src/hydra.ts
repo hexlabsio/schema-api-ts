@@ -1,6 +1,6 @@
 import {JSONSchema} from "json-schema-to-typescript";
 
-export function hydraResource(definition: JSONSchema & {type: 'object'}): JSONSchema {
+export function hydraResource(definition: JSONSchema): JSONSchema {
   return {
     ...definition,
     '@id': { type: 'string' },
