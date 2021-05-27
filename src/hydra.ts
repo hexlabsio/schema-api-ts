@@ -29,7 +29,7 @@ export function hydraCollection(title: string, definition: JSONSchema): JSONSche
     required: ['member', 'totalItems'],
     additionalProperties: false,
     properties: {
-      member: definition,
+      member: { type: 'array', items: definition },
       totalItems: { type: 'number' }
     }
   })
@@ -42,7 +42,7 @@ export function hydraPagedCollection(title: string, definition: JSONSchema): JSO
     required: ['member', 'totalItems'],
     additionalProperties: false,
     properties: {
-      member: definition,
+      member: { type: 'array', items: definition },
       totalItems: { type: 'number' },
       first: { type: 'string' },
       next: { type: 'string' },
