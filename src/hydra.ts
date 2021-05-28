@@ -35,6 +35,21 @@ const hydraSpec: {[key: string]: JSONSchema} = {
         }
       }
     ]
+  },
+  'HydraPagedCollection': {
+    title: 'Hydra Paged Collection',
+    allOf: [
+      { $ref: '#/components/schemas/HydraCollection' },
+      {
+        type: 'object',
+        properties: {
+          first: {type: 'string'},
+          next: {type: 'string'},
+          previous: {type: 'string'},
+          last: {type: 'string'},
+        }
+      }
+    ]
   }
 }
 
