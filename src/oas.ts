@@ -18,9 +18,34 @@ export interface OASComponents {
   examples?: { [key: string]: any | OASRef };
   requestBodies?: { [key: string]: OASRequestBody | OASRef };
   headers?: { [key: string]: Omit<OASParameter, 'name' | 'in'> | OASRef };
-  securitySchemes?: { [key: string]: any | OASRef };
+  securitySchemes?: { [key: string]: OASSecurityScheme | OASRef };
   links?: { [key: string]: any | OASRef };
   callbacks?: { [key: string]: OASPath | OASRef };
+}
+
+export interface OASSecurityScheme {
+  type: string;
+  description?: string;
+  name: string;
+  in: "query" | "header" | "cookie",
+  scheme: string;
+  bearerFormat?: string;
+  flows: OASOAuthFlows;
+  openIdConnectUrl: string;
+}
+
+export interface OASOAuthFlows {
+  implicit?: OASOAuthFlow;
+  password?: OASOAuthFlow;
+  clientCredentials?: OASOAuthFlow;
+  authorizationCode?: OASOAuthFlow;
+}
+
+export interface OASOAuthFlow {
+  authorizationUrl: string;
+  tokenUrl: string;
+  refreshUrl?: string;
+  scopes: { [scope: string]: string }
 }
 
 export interface OASTag {
