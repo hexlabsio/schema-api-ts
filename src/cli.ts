@@ -8,6 +8,7 @@ import chalk from 'chalk';
 require('ts-node').register({typeCheck: false});
 import { Command } from 'commander';
 import {generateSdkFrom} from "./sdk-mapper";
+import {generateMockFrom} from "./mock-mapper";
 
 const program = new Command();
 
@@ -35,6 +36,7 @@ async function generateFromSchema(schemaLocation: string) {
   fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));
   fs.writeFileSync(dir + 'model.ts', await types(schema));
   fs.writeFileSync(dir + 'sdk.ts', generateSdkFrom(schema, version));
+  fs.writeFileSync(dir + 'mock.ts', generateMockFrom(schema));
 }
 
 

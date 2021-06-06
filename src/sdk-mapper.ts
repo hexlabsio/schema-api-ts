@@ -29,14 +29,14 @@ function traversePath<T>(path: string, obj: any): T {
   return traverse<T>(path.replace('#/', '').split('/'), obj) as T;
 }
 
-function pathsFrom(oas: OAS): Array<{ path: string, definition: OASPath | undefined; }> {
+export function pathsFrom(oas: OAS): Array<{ path: string, definition: OASPath | undefined; }> {
   return Object.keys(oas.paths).map(key => {
     const value = oas.paths[key];
     if (Object.prototype.hasOwnProperty.call(value, '$ref')) return { path: key, definition: traversePath((value as OASRef)['$ref'], oas) };
     return { path: key, definition: value as OASPath };
   });
 }
-function methodOperations(path: OASPath): Array<{ method: string; definition: OASOperation; }> {
+export function methodOperations(path: OASPath): Array<{ method: string; definition: OASOperation; }> {
   const keys = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
   return Object.keys(path).filter(it => keys.includes(it)).map(key => {
     const operation = (path as any)[key] as OASOperation;
@@ -72,7 +72,7 @@ function headerParamsParam(headerParameters: string[]): string | undefined {
   return `headers: Record<string, string> & Partial<{${headerParameters.map(it => `'${it}': string`).join('; ')}}>`;
 }
 
-function typeFrom(oas: OAS, response: OASResponse | OASRef): [string, string[]] {
+export function typeFrom(oas: OAS, response: OASResponse | OASRef): [string, string[]] {
   const def = Object.prototype.hasOwnProperty.call(response, '$ref') ? traversePath<OASResponse>((response as OASRef)['$ref'], oas) : response as OASResponse;
   const type = Object.keys(def.content ?? ['application/text'])[0];
   const ref = (def.content as any)[type].schema as OASRef;
