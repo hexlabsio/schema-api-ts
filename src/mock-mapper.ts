@@ -45,7 +45,7 @@ export const generateMockFrom = (spec: OAS): string => {
   const mock = mockFrom(spec);
   return `
 const ${mock.name} = (app: any) => {
-  ${mock.paths.map(path => path.methods.map(method => `app.${method.method}("${path.path}", (req, res) => res.status(${method.statusCode}).json(${JSON.stringify(method.response)}));`).join("\n  ")).join("\n  ")}
+  ${mock.paths.map(path => path.methods.map(method => `app.${method.method}("${path.path.replace(/{([^/{}]+)}/g, ':$1')}", (req, res) => res.status(${method.statusCode}).json(${JSON.stringify(method.response)}));`).join("\n  ")).join("\n  ")}
 }
 
 export default ${mock.name};
