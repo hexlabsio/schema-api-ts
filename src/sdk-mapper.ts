@@ -25,7 +25,7 @@ function traverse<T>(parts: string[], obj: any): T | undefined {
   return undefined;
 }
 
-function traversePath<T>(path: string, obj: any): T {
+export function traversePath<T>(path: string, obj: any): T {
   return traverse<T>(path.replace('#/', '').split('/'), obj) as T;
 }
 

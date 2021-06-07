@@ -1,5 +1,5 @@
-import {OAS, OASOperation, OASResponse} from "./oas";
-import {methodOperations, pathsFrom} from "./sdk-mapper";
+import {OAS, OASOperation, OASRef, OASResponse} from "./oas";
+import {methodOperations, pathsFrom, traversePath} from "./sdk-mapper";
 
 interface Method {
   method: string
@@ -19,7 +19,8 @@ export interface Mock {
 
 export const responseFrom = (oas: OAS, method: OASOperation): [string, any] => {
   const statusCode = Object.keys(method.responses).find(x => x)!;
-  const response = method.responses[statusCode] as OASResponse;
+  const refResponse = method.responses[statusCode];
+  const response = Object.prototype.hasOwnProperty.call(refResponse, '$ref') ? traversePath<OASResponse>((refResponse as OASRef)['$ref'], oas) : refResponse as OASResponse;
   const contentType = Object.keys(response.content ?? '')[0]
   const content = response.content ? response.content[contentType] : undefined;
   return [statusCode, content?.example ?? {}];
