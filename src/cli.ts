@@ -36,18 +36,29 @@ async function generateFromSchema(schemaLocation: string) {
   fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));
   fs.writeFileSync(dir + 'model.ts', await types(schema));
   fs.writeFileSync(dir + 'sdk.ts', generateSdkFrom(schema, version));
-  fs.writeFileSync(dir + 'mock.ts', generateMockFrom(schema));
 }
 
+async function generateMockFromSchema(schemaLocation: string) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const schema: OAS = schemaLocation.endsWith('.ts') ? require(schemaLocation).default : require(schemaLocation);
+  const dir = 'generated/' + schema.info.title.toLowerCase().replace(/ /g, '-') + '/';
+  fs.writeFileSync(dir + 'mock.ts', generateMockFrom(schema));
+}
 
 function generate(): any {
   return program.command('generate <schemaLocation>')
   .action(generateFromSchema)
 }
 
+function generateMock(): any {
+  return program.command('generateMock <schemaLocation>')
+      .action(generateMockFromSchema)
+}
+
 (async () => {
   try {
     generate();
+    generateMock();
     await program.parseAsync(process.argv);
   } catch(e) {
     console.log(chalk.red(e));

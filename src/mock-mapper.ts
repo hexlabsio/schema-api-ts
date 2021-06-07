@@ -25,12 +25,12 @@ function firstReturnType(oas: OAS, method: OASOperation, imports: string[]): [st
   return [statusCode, type]
 }
 
-const mockFrom = (spec: OAS, imports: string[]): Mock => ({
+const mockFrom = (spec: OAS): Mock => ({
   name: spec.info.title.replace(/ /g, '') + 'Mock',
   paths: pathsFrom(spec).map(path => ({
     path: path.path,
     methods: methodOperations(path.definition!).map(methodOperation => {
-      const [statusCode, type] = firstReturnType(spec, methodOperation.definition, imports);
+      const [statusCode, type] = firstReturnType(spec, methodOperation.definition, []);
       return {
         statusCode,
         type,
@@ -41,14 +41,12 @@ const mockFrom = (spec: OAS, imports: string[]): Mock => ({
 })
 
 export const generateMockFrom = (spec: OAS): string => {
-  const imports: string[] = []
-  const mock = mockFrom(spec, imports);
+  const mock = mockFrom(spec);
   return `import {mock} from "intermock";
 import {readFileSync} from 'fs';
-${imports.length > 0 ? `import { ${[...new Set([...imports])].join(', ')} } from './model'` : ``}
 
 const ${mock.name} = (app: any) => {
-  ${mock.paths.map(path => path.methods.map(method => `app.${method.method}("${path.path}", (req, res) => res.status(${method.statusCode}).json(mock({files: [["", readFileSync('./model.d.ts', 'utf-8')]], interfaces: ["${method.type}"]})));`).join("\n  "))}
+  ${mock.paths.map(path => path.methods.map(method => `app.${method.method}("${path.path}", (req, res) => res.status(${method.statusCode}).json(mock({files: [["", readFileSync('./model.d.ts', 'utf-8')]], interfaces: ["${method.type}"]})));`).join("\n  ")).join("\n  ")}
 }`
 }
 
