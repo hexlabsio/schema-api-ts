@@ -43,10 +43,14 @@ const mockFrom = (spec: OAS): Mock => ({
 export const generateMockFrom = (spec: OAS): string => {
   const mock = mockFrom(spec);
   return `import {mock} from "intermock";
+import path from 'path';
 import {readFileSync} from 'fs';
 
 const ${mock.name} = (app: any) => {
-  ${mock.paths.map(path => path.methods.map(method => `app.${method.method}("${path.path}", (req, res) => res.status(${method.statusCode}).json(mock({files: [["", readFileSync('./model.d.ts', 'utf-8')]], interfaces: ["${method.type}"]})));`).join("\n  ")).join("\n  ")}
-}`
+  ${mock.paths.map(path => path.methods.map(method => `app.${method.method}("${path.path}", (req, res) => res.status(${method.statusCode}).json(mock({files: [["", readFileSync(path.resolve(__dirname, './model.ts'), 'utf-8')]], interfaces: ["${method.type}"]})));`).join("\n  ")).join("\n  ")}
+}
+
+export default ${mock.name};
+`
 }
 
