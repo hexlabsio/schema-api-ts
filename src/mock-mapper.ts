@@ -1,10 +1,10 @@
-import {OAS, OASOperation} from "./oas";
-import {methodOperations, pathsFrom, typeFrom} from "./sdk-mapper";
+import {OAS, OASOperation, OASResponse} from "./oas";
+import {methodOperations, pathsFrom} from "./sdk-mapper";
 
 interface Method {
   method: string
   statusCode: string
-  type: string
+  response: any
 }
 
 interface Path {
@@ -17,23 +17,23 @@ export interface Mock {
   paths: Path[]
 }
 
-function firstReturnType(oas: OAS, method: OASOperation, imports: string[]): [string, string] {
+export const responseFrom = (oas: OAS, method: OASOperation): [string, any] => {
   const statusCode = Object.keys(method.responses).find(x => x)!;
-  const response = method.responses[statusCode];
-  const [type, newImports] = typeFrom(oas, response);
-  imports.push(...newImports);
-  return [statusCode, type]
+  const response = method.responses[statusCode] as OASResponse;
+  const contentType = Object.keys(response.content ?? '')[0]
+  const content = response.content ? response.content[contentType] : undefined;
+  return [statusCode, content?.example ?? {}];
 }
 
-const mockFrom = (spec: OAS): Mock => ({
+export const mockFrom = (spec: OAS): Mock => ({
   name: spec.info.title.replace(/ /g, '') + 'Mock',
   paths: pathsFrom(spec).map(path => ({
     path: path.path,
     methods: methodOperations(path.definition!).map(methodOperation => {
-      const [statusCode, type] = firstReturnType(spec, methodOperation.definition, []);
+      const [statusCode, response] = responseFrom(spec, methodOperation.definition);
       return {
         statusCode,
-        type,
+        response,
         method: methodOperation.method,
       }
     })
@@ -42,12 +42,9 @@ const mockFrom = (spec: OAS): Mock => ({
 
 export const generateMockFrom = (spec: OAS): string => {
   const mock = mockFrom(spec);
-  return `import {mock} from "intermock";
-import path from 'path';
-import {readFileSync} from 'fs';
-
+  return `
 const ${mock.name} = (app: any) => {
-  ${mock.paths.map(path => path.methods.map(method => `app.${method.method}("${path.path}", (req, res) => res.status(${method.statusCode}).json(mock({files: [["", readFileSync(path.resolve(__dirname, './model.ts'), 'utf-8')]], interfaces: ["${method.type}"]})));`).join("\n  ")).join("\n  ")}
+  ${mock.paths.map(path => path.methods.map(method => `app.${method.method}("${path.path}", (req, res) => res.status(${method.statusCode}).json(${method.response});`).join("\n  ")).join("\n  ")}
 }
 
 export default ${mock.name};
