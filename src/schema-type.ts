@@ -1,5 +1,5 @@
 import {JSONSchema} from "json-schema-to-typescript";
-import {OASInfo, OASMedia, OASResponse} from "./oas";
+import {OASEncoding, OASInfo, OASMedia, OASResponse} from "./oas";
 import {OAS, OASComponents} from "./oas";
 
 type UnionToTuple<T> = (
@@ -135,30 +135,49 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   }
 }
 
-export class OpenApiSpecificationBuilder<S extends {components: {schemas: any}}>{
+export class OpenApiSpecificationBuilder<S extends {components: {schemas: any, responses: Record<string, any> | undefined}}>{
   private constructor(public oas: OAS) {}
   
   build(): OAS {
     return this.oas;
   }
   
-  jsonContent<K extends keyof S['components']['schemas']>(key: K, example?: Schema<S['components']['schemas'][K], S>): {'application/json': OASMedia} {
-    return {'application/json': this.media(key, example)};
-  }
-  textContent(example?: string): {'application/text': OASMedia}  {
-    return {'application/text': {schema: SchemaBuilder.create().string(), example}};
+  jsonContent<K extends keyof S['components']['schemas']>(
+    key: K,
+    example?: Schema<S['components']['schemas'][K], S>,
+    examples?: Record<string, Schema<S['components']['schemas'][K], S>>,
+    encoding?: { [key: string]: OASEncoding }
+  ): {'application/json': OASMedia} {
+    return {'application/json': this.media(key, example, examples, encoding)};
   }
   
-  response<K extends number>(statusCode: K, description: string, content: Record<string, OASMedia>, response?: OASResponse): { [k in K as `${k}`]: OASResponse } {
+  textContent(example?: string, examples?: Record<string, string>, encoding?: { [key: string]: OASEncoding }): {'application/text': OASMedia}  {
+    return {'application/text': {schema: SchemaBuilder.create().string(), example, examples, encoding}};
+  }
+  
+  responseRef<C extends number, K extends keyof S['components']['responses']>(statusCode: C, key: K): { [k in K]: {'$ref': K extends string ? `#/components/responses/${K}` : string} } {
+    return { [`${statusCode}`]: { '$ref': `#/components/responses/${key}` }} as any;
+  }
+  
+  response<K extends number>(statusCode: K, description: string, content: Record<string, OASMedia>, response?: OASResponse): { [k in K]: OASResponse } {
     return { [`${statusCode}`]: { description, content, ...(response ?? {}) }} as any
   }
   
-  media<K extends keyof S['components']['schemas']>(key: K, example?: Schema<S['components']['schemas'][K], S>): OASMedia {
-    return { schema: this.reference(key), example }
+  media<K extends keyof S['components']['schemas']>(
+    key: K,
+    example?: Schema<S['components']['schemas'][K], S>,
+    examples?: Record<string, Schema<S['components']['schemas'][K], S>>,
+    encoding?: { [key: string]: OASEncoding }
+  ): OASMedia {
+    return { schema: this.reference(key), example, examples, encoding }
   }
   
   reference<K extends keyof S['components']['schemas']>(key: K): { '$ref': K extends string ? `#/components/schemas/${K}` : string } {
-    return { '$ref': `#/components/schemas/${key}` } as any;
+    return this.componentReference('schemas', key);
+  }
+  
+  componentReference<K extends keyof S['components'], T extends keyof S['components'][K]>(componentKey: K, key: T): { '$ref': K extends string ? T extends string ? `#/components/${K}/${T}` : string : string } {
+    return { '$ref': `#/components/${componentKey}/${key}` } as any;
   }
   
   addComponent<K extends keyof OASComponents>(location: K, itemBuilder: (builder: this) => OASComponents[K]): this {
@@ -190,7 +209,7 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas: any}}>
     return this;
   }
   
-  static create<S extends {components: {schemas: any}}>(schemas: S, info: OASInfo): OpenApiSpecificationBuilder<S> {
+  static create<S extends {components: {schemas: any, responses: Record<string, any> | undefined}}>(schemas: S, info: OASInfo): OpenApiSpecificationBuilder<S> {
     return new OpenApiSpecificationBuilder<S>({openapi: '3.0.0', info, paths: {}, ...schemas as any });
   }
 }
