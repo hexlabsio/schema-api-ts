@@ -2,6 +2,25 @@ import {JSONSchema} from "json-schema-to-typescript";
 import {OASInfo, OASMedia, OASResponse} from "./oas";
 import {OAS, OASComponents} from "./oas";
 
+type UnionToTuple<T> = (
+  (
+    (
+      T extends any
+        ? (t: T) => T
+        : never
+      ) extends infer U
+      ? (U extends any
+      ? (u: U) => any
+      : never
+        ) extends (v: infer V) => any
+      ? V
+      : never
+      : never
+    ) extends (_: any) => infer W
+    ? [...UnionToTuple<Exclude<T, W>>, W]
+    : []
+  );
+
 type Ref<S, R extends string> = R extends `${infer Start}/${infer Rest}` ? (Start extends '#' ? Ref<S, Rest> : (Start extends keyof S ? Ref<S[Start], Rest> : never)) : (R extends keyof S ? S[R] : never)
 type FromProps<S, O = S> = S extends {properties: any} ? { -readonly [K in keyof S['properties']]: Schema<S['properties'][K], O> } : {};
 type FromArray<S, O = S> = S extends {items: readonly any[]} ? FromTuple<S['items'], O> : S extends {items: any} ? Array<Schema<S['items'], O>> : never;
@@ -27,7 +46,7 @@ type Stripped<T> = { [Q in FilteredKeys<T>]: T[Q] };
 
 type Combine<A,B> = A extends undefined ? ( B extends undefined ? never : B) : ( B extends undefined ? A : A & B)
 
-type ObjectSchema<A extends boolean | JSONSchema | undefined = undefined, R extends JSONSchema| undefined = undefined, O extends JSONSchema | undefined= undefined> = Stripped<{type: 'object', title: string, additionalProperties: A extends undefined ? never : A, required: R extends undefined ? never: (keyof R)[], properties: Combine<R,O> }>;
+type ObjectSchema<A extends boolean | JSONSchema | undefined = false, R extends Record<string, JSONSchema>| undefined = undefined, O extends JSONSchema | undefined= undefined> = Stripped<{type: 'object', title: string, additionalProperties: A extends undefined ? never : A, required: R extends undefined ? never: UnionToTuple<keyof R>, properties: Combine<R,O> }>;
 type ArraySchema<R, A extends boolean | JSONSchema | undefined = undefined> = Stripped<{type: 'array', title: string, additionalItems: A extends undefined ? never : A, items: R }>;
 
 export class SchemaBuilder<T extends {components:{schemas: any}}> {
@@ -38,8 +57,8 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
     return this.schemaParent
   }
   
-  object<R = undefined,O = undefined, A extends boolean | JSONSchema | undefined = undefined, P extends JSONSchema | undefined = undefined>
-  (required: R = undefined as unknown as R, optional: O = undefined as unknown as O, additionalProperties: A = undefined as unknown as A, title = this.title, parts: P = undefined as unknown as P): ObjectSchema<A, R, O> {
+  object<R extends Record<string, JSONSchema> | undefined = undefined,O = undefined, A extends boolean | JSONSchema | undefined = false, P extends JSONSchema | undefined = undefined>
+  (required: R = undefined as unknown as R, optional: O = undefined as unknown as O, additionalProperties: A = false as unknown as A, title = this.title, parts: P = undefined as unknown as P): ObjectSchema<A, R, O> {
     return {
       type: 'object',
       title,
