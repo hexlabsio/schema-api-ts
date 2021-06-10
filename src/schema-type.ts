@@ -51,7 +51,7 @@ type ArraySchema<R, A extends boolean | JSONSchema | undefined = undefined> = St
 
 export class SchemaBuilder<T extends {components:{schemas: any}}> {
   
-  private constructor(private readonly schemaParent: T, private readonly title?: string) {}
+  private constructor(private readonly schemaParent: T, private title?: string) {}
   
   build(): T {
     return this.schemaParent
@@ -59,6 +59,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   
   object<R extends Record<string, JSONSchema> | undefined = undefined,O = undefined, A extends boolean | JSONSchema | undefined = false, P extends JSONSchema | undefined = undefined>
   (required: R = undefined as unknown as R, optional: O = undefined as unknown as O, additionalProperties: A = false as unknown as A, title = this.title, parts: P = undefined as unknown as P): ObjectSchema<A, R, O> {
+    this.title = undefined;
     return {
       type: 'object',
       title,
@@ -74,6 +75,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   
   array<R, A extends boolean | JSONSchema | undefined = undefined, P extends JSONSchema | undefined = undefined>
   (items: R, additionalItems: A = undefined as unknown as A, title = this.title, parts: P = undefined as unknown as P): ArraySchema<R, A> {
+    this.title = undefined;
     return {
       type: 'array',
       title,
