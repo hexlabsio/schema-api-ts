@@ -51,15 +51,14 @@ type ArraySchema<R, A extends boolean | JSONSchema | undefined = undefined> = St
 
 export class SchemaBuilder<T extends {components:{schemas: any}}> {
   
-  private constructor(private readonly schemaParent: T, private title?: string) {}
+  private constructor(private readonly schemaParent: T) {}
   
   build(): T {
     return this.schemaParent
   }
   
   object<R extends Record<string, JSONSchema> | undefined = undefined,O = undefined, A extends boolean | JSONSchema | undefined = false, P extends JSONSchema | undefined = undefined>
-  (required: R = undefined as unknown as R, optional: O = undefined as unknown as O, additionalProperties: A = false as unknown as A, title = this.title, parts: P = undefined as unknown as P): ObjectSchema<A, R, O> {
-    this.title = undefined;
+  (required: R = undefined as unknown as R, optional: O = undefined as unknown as O, additionalProperties: A = false as unknown as A, title = undefined, parts: P = undefined as unknown as P): ObjectSchema<A, R, O> {
     return {
       type: 'object',
       title,
@@ -74,8 +73,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   }
   
   array<R, A extends boolean | JSONSchema | undefined = undefined, P extends JSONSchema | undefined = undefined>
-  (items: R, additionalItems: A = undefined as unknown as A, title = this.title, parts: P = undefined as unknown as P): ArraySchema<R, A> {
-    this.title = undefined;
+  (items: R, additionalItems: A = undefined as unknown as A, title = undefined, parts: P = undefined as unknown as P): ArraySchema<R, A> {
     return {
       type: 'array',
       title,
@@ -117,7 +115,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   
   hydraResource<K extends keyof T['components']['schemas']>(reference: K): T['components']['schemas'][K] extends {type: 'object'} ? T['components']['schemas'][K] & {type: 'object', properties: {'@id': {type: 'string'}, '@operation': ReturnType<SchemaBuilder<any>['hydraOperation']>}} : never{
     const other: JSONSchema = this.schemaParent.components.schemas[reference];
-    if(!Object.keys(this.schemaParent.components.schemas).includes('HydraOperation')) this.add('HydraOperation', () => this.hydraOperation());
+    if(!Object.keys(this.schemaParent.components.schemas).includes('HydraOperation')) throw new Error('HydraOperation must first be defined in the schema')
     if(other.type === 'object') {
       return {
         ...other,
@@ -134,14 +132,15 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   hydraCollection<K extends keyof T['components']['schemas']>(reference: K): T['components']['schemas'][K] extends {type: 'object'} ? {type: 'object', required: ['@id', '@operation', 'member'], properties: {'@id': {type: 'string'}, '@operation': ReturnType<SchemaBuilder<any>['hydraOperation']>, 'member': ArraySchema<T['components']['schemas'][K]>}} : never{
     const other: JSONSchema = this.schemaParent.components.schemas[reference];
     if(other.type === 'object') {
-      if(!Object.keys(this.schemaParent.components.schemas).includes('HydraOperation')) this.add('HydraOperation', () => this.hydraOperation());
+      if(!Object.keys(this.schemaParent.components.schemas).includes('HydraOperation')) throw new Error('HydraOperation must first be defined in the schema')
       return this.object({'@id': this.string(), '@operation': this.reference('HydraOperation'), member: this.array(other)}) as any
     }
     throw new Error('Must be an object to map to hydra resource')
   }
   
   add<K extends string, B extends (builder: SchemaBuilder<T & {components:{schemas: {[k in K]: any }}}>) => any>(name: K, schema: B): B extends (s: any) => infer S ? SchemaBuilder<T & {components:{schemas: {[k in K]: S }}}>: never {
-    return new SchemaBuilder({components: {schemas: {...this.schemaParent.components.schemas, [name]: schema(new SchemaBuilder(this.schemaParent, name)) }}}, name) as any;
+    const s = schema(new SchemaBuilder(this.schemaParent));
+    return new SchemaBuilder({components: {schemas: {...this.schemaParent.components.schemas, [name]: {...s, title: name } }}}) as any;
   }
   
   static create(): SchemaBuilder<{components:{schemas: {}}}> {

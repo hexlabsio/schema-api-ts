@@ -40,7 +40,7 @@ const servers: OASServer[] = [
 const schemas = SchemaBuilder.create()
 .add('CreateView', s => s.object({name: s.string(), credentials: s.string()}));
 
-const testServiceSpec = OpenApiSpecificationBuilder.create(schemas.schemaParent, { version: '1.0.0', title: 'Test Service' })
+const testServiceSpec = OpenApiSpecificationBuilder.create(schemas.build(), { version: '1.0.0', title: 'Test Service' })
 .add('servers', () => servers)
 .add('paths', o => ({
   '/views': { get: { security: [{OAuth: ['read', 'write', 'admin']}], responses: o.response(200, 'Success', o.jsonContent('CreateView', {name: 'test', credentials: 'creds'}))}}
