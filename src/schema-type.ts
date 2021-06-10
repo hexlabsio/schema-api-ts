@@ -57,6 +57,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   (items: R, additionalItems: A = undefined as unknown as A, title = this.title, parts: P = undefined as unknown as P): ArraySchema<R, A> {
     return {
       type: 'array',
+      title,
       items,
       additionalItems,
       ...parts
