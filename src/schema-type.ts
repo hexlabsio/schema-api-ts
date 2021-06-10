@@ -49,7 +49,7 @@ type Combine<A,B> = A extends undefined ? ( B extends undefined ? never : B) : (
 type ObjectSchema<A extends boolean | JSONSchema | undefined = false, R extends Record<string, JSONSchema>| undefined = undefined, O extends JSONSchema | undefined= undefined> = Stripped<{type: 'object', title: string, additionalProperties: A extends undefined ? never : A, required: R extends undefined ? never: UnionToTuple<keyof R>, properties: Combine<R,O> }>;
 type ArraySchema<R, A extends boolean | JSONSchema | undefined = undefined> = Stripped<{type: 'array', title: string, additionalItems: A extends undefined ? never : A, items: R }>;
 
-export class SchemaBuilder<T extends {components:{schemas: any}}> {
+export class SchemaBuilder<T extends {components:{schemas?: any}}> {
   
   private constructor(private readonly schemaParent: T, private readonly title?: string) {}
   
@@ -83,7 +83,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
     } as any
   }
   
-  string<P extends JSONSchema| undefined = undefined>(parts: P = undefined as unknown as P): Combine<{type: 'string'}, P> {
+  string<P extends JSONSchema| undefined = undefined>(parts?: P): Combine<{type: 'string'}, P> {
     return {type: 'string', ...(parts ?? {})} as any;
   }
   number<P extends JSONSchema| undefined = undefined>(parts: P = undefined as unknown as P): Combine<{type: 'number'}, P> {
@@ -126,7 +126,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
     throw new Error('Must be an object to map to hydra resource')
   }
   
-  add<K extends string, B extends (builder: SchemaBuilder<{components:{schemas: T['components']['schemas'] & {[k in K]: any}}}>) => any>(name: K, schema: B): B extends (s: any) => infer S ? SchemaBuilder<{components:{schemas: T['components']['schemas'] & {[k in K]: S }}}>: never {
+  add<K extends string, B extends (builder: SchemaBuilder<{components:{schemas?: T['components']['schemas'] & {[k in K]: any}}}>) => any>(name: K, schema: B): B extends (s: any) => infer S ? SchemaBuilder<T & {components:{schemas: {[k in K]: S }}}>: never {
     return new SchemaBuilder({components: {schemas: {...this.schemaParent.components.schemas, [name]: schema(new SchemaBuilder(this.schemaParent, name)) }}}, name) as any;
   }
   
@@ -135,8 +135,9 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   }
 }
 
-export class OpenApiSpecificationBuilder<S extends {components: {schemas: any, responses: Record<string, any> | undefined}}>{
-  private constructor(public oas: OAS) {}
+export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, responses?: Record<string, any>}}> {
+  private constructor(public oas: OAS) {
+  }
   
   build(): OAS {
     return this.oas;
@@ -147,15 +148,15 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas: any, r
     example?: Schema<S['components']['schemas'][K], S>,
     examples?: Record<string, Schema<S['components']['schemas'][K], S>>,
     encoding?: { [key: string]: OASEncoding }
-  ): {'application/json': OASMedia} {
+  ): { 'application/json': OASMedia } {
     return {'application/json': this.media(key, example, examples, encoding)};
   }
   
-  textContent(example?: string, examples?: Record<string, string>, encoding?: { [key: string]: OASEncoding }): {'application/text': OASMedia}  {
+  textContent(example?: string, examples?: Record<string, string>, encoding?: { [key: string]: OASEncoding }): { 'application/text': OASMedia } {
     return {'application/text': {schema: SchemaBuilder.create().string(), example, examples, encoding}};
   }
   
-  responseReference<K extends keyof S['components']['responses']>(key: K): {'$ref': K extends string ? `#/components/responses/${K}` : string} {
+  responseReference<K extends keyof S['components']['responses']>(key: K): { '$ref': K extends string ? `#/components/responses/${K}` : string } {
     return this.componentReference('responses', key);
   }
   
@@ -165,7 +166,7 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas: any, r
     examples?: Record<string, Schema<S['components']['schemas'][K], S>>,
     encoding?: { [key: string]: OASEncoding }
   ): OASMedia {
-    return { schema: this.reference(key), example, examples, encoding }
+    return {schema: this.reference(key), example, examples, encoding}
   }
   
   reference<K extends keyof S['components']['schemas']>(key: K): { '$ref': K extends string ? `#/components/schemas/${K}` : string } {
@@ -173,39 +174,45 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas: any, r
   }
   
   componentReference<K extends keyof S['components'], T extends keyof S['components'][K]>(componentKey: K, key: T): { '$ref': K extends string ? T extends string ? `#/components/${K}/${T}` : string : string } {
-    return { '$ref': `#/components/${componentKey}/${key}` } as any;
+    return {'$ref': `#/components/${componentKey}/${key}`} as any;
   }
   
-  addComponent<K extends keyof OASComponents>(location: K, itemBuilder: (builder: this) => OASComponents[K]): this {
+  addComponent<K extends keyof OASComponents, B extends (builder: this) => OASComponents[K]>(location: K, itemBuilder: B): B extends (builder: any) => infer R ? OpenApiSpecificationBuilder<S & { components: { [k in K]: R } }> : never {
     const item = itemBuilder(this);
     const current = this.oas.components ?? {};
-    if(typeof item === "object") {
-      if(Array.isArray(item)) {
-        this.oas = {...this.oas, components: { ...current, [location]: [...(current[location] as unknown as any[] ?? []), ...item]}};
+    if (typeof item === "object") {
+      if (Array.isArray(item)) {
+        this.oas = {
+          ...this.oas,
+          components: {...current, [location]: [...(current[location] as unknown as any[] ?? []), ...item]}
+        };
       } else {
-        this.oas = {...this.oas, components: { ...current, [location]: {...(current[location] as any ?? {}), ...(item as any)}}};
+        this.oas = {
+          ...this.oas,
+          components: {...current, [location]: {...(current[location] as any ?? {}), ...(item as any)}}
+        };
       }
     } else {
-      this.oas = {...this.oas, components: { ...current, [location]:  item } };
+      this.oas = {...this.oas, components: {...current, [location]: item}};
     }
-    return this;
+    return this as any;
   }
   
   add<K extends keyof OAS>(location: K, itemBuilder: (builder: this) => OAS[K]): this {
     const item = itemBuilder(this);
-    if(typeof item === "object") {
-      if(Array.isArray(item)) {
+    if (typeof item === "object") {
+      if (Array.isArray(item)) {
         this.oas = {...this.oas, [location]: [...(this.oas[location] as any[] ?? []), ...item]};
-      }else {
+      } else {
         this.oas = {...this.oas, [location]: {...(this.oas[location] as any ?? {}), ...(item as any)}};
       }
     } else {
-      this.oas = {...this.oas, [location]: item };
+      this.oas = {...this.oas, [location]: item};
     }
     return this;
   }
   
-  static create<S extends {components: {schemas: any, responses: Record<string, any> | undefined}}>(schemas: S, info: OASInfo): OpenApiSpecificationBuilder<S> {
-    return new OpenApiSpecificationBuilder<S>({openapi: '3.0.0', info, paths: {}, ...schemas as any });
+  static create<S extends { components: { schemas: any, responses?: Record<string, any> } }>(schemas: S, info: OASInfo): OpenApiSpecificationBuilder<S> {
+    return new OpenApiSpecificationBuilder<S>({openapi: '3.0.0', info, paths: {}, ...schemas as any});
   }
 }
