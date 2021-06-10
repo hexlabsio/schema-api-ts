@@ -35,8 +35,7 @@ export class Path {
         ?.map(p => (p as OASParameter).name) ?? [];
       Object.keys(path).filter(it => methods.includes(it)).forEach(method => {
           const definition = (path as any)[method] as OASOperation;
-          const schemes = (definition.security ?? []).flatMap(it => Object.keys(it)).map(it => securitySchemes?.[it]).filter(it => !!it) as unknown as OASSecurityScheme[];
-          const scopes = schemes.flatMap(scheme => [...Object.keys(scheme.flows?.implicit?.scopes ?? {}), ...Object.keys(scheme.flows?.authorizationCode?.scopes ?? {}), ...Object.keys(scheme.flows?.clientCredentials?.scopes ?? {}), ...Object.keys(scheme.flows?.password?.scopes ?? {})]);
+          const scopes = (definition.security ?? []).flatMap(it => Object.keys(it).flatMap(key => it[key]))
           this.methods.push(new Method(method, Object.keys(definition.responses), queryParams, [...new Set(scopes)], definition.operationId))
         }
       );

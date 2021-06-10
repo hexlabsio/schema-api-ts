@@ -26,12 +26,12 @@ export interface OASComponents {
 export interface OASSecurityScheme {
   type: string;
   description?: string;
-  name: string;
-  in: "query" | "header" | "cookie",
-  scheme: string;
+  name?: string;
+  in?: "query" | "header" | "cookie",
+  scheme?: string;
   bearerFormat?: string;
   flows: OASOAuthFlows;
-  openIdConnectUrl: string;
+  openIdConnectUrl?: string;
 }
 
 export interface OASOAuthFlows {
@@ -43,7 +43,7 @@ export interface OASOAuthFlows {
 
 export interface OASOAuthFlow {
   authorizationUrl: string;
-  tokenUrl: string;
+  tokenUrl?: string;
   refreshUrl?: string;
   scopes: { [scope: string]: string }
 }

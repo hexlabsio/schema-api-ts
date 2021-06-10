@@ -33,6 +33,7 @@ async function generateFromSchema(schemaLocation: string) {
   const pathInfo = pathFinder.pathInfo();
   fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));
   fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));
+  if(schema.servers) fs.writeFileSync(dir + 'servers.json', JSON.stringify(schema.servers, null, 2));
   fs.writeFileSync(dir + 'model.ts', await types(schema));
   fs.writeFileSync(dir + 'sdk.ts', generateSdkFrom(schema, version));
 }

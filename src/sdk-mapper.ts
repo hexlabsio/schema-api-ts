@@ -151,7 +151,7 @@ function sdkMethod(version: string | undefined, path: string, method: string, pa
       const resource = '${path}';
       const path = \`${resourcePath}\`;
       const versionedHeaders = ${version ? `{...headers, ['X-API-VERSION']: '${version}' }` : 'headers'};
-      const result = await this.caller.call('${method.toUpperCase()}', resource, path, ${bodyParam ? 'JSON.stringify(body)' : 'undefined'}, ${pathParams ? 'params' : '{}'}, ${queryParams ? 'queryParameters' : '{}'}, ${multiQueryParams ? 'multiQueryParameters' : '{}'}, versionedHeaders);
+      const result = await this.caller.call('${method.toUpperCase()}', resource, path, ${bodyParam ? 'JSON.stringify(body)' : 'undefined'}, ${pathParams ? 'params' : '{}'}, ${queryParams ? 'queryParameters' : '{}'}, ${multiQueryParams ? 'multiQueryParameters' : '{}'}, versionedHeaders, this.server());
       ${version ? versionCheck : ''}${bodyValue(oas, methodDefinition)}
       throw new Error(\`Unknown status \${result.statusCode} returned from \${path}\`)
     }`;
@@ -173,6 +173,11 @@ export function generateSdkFrom(oas: OAS, version?: string): string {
         });
       } else return [];
     });
+    const oasServers = oas.servers ?? [];
+    const servers = oasServers.map(it => `{ url: '${it.url}', variables: { ${Object.keys(it.variables).map(variable => `${variable}: '${it.variables[variable].default ?? it.variables[variable].enum?.[0] ?? ''}'`)} } }`);
+    const serverLookup = [...new Set(oasServers.flatMap(it => Object.keys(it.variables)))];
+    const serverLookupTyped = serverLookup.map(key => `${key}?: ${oasServers.find(it => Object.keys(it.variables).includes(key))!.variables[key].enum?.map(it => `'${it}'`)?.join(' | ') ?? 'string'}`);
+  
     return `import { ${[...new Set([...imports])].join(', ')} } from './model';
 
 export type Caller = {
@@ -184,14 +189,22 @@ export type Caller = {
       pathParameters: Record<string, string>,
       queryParameters: Record<string, string>,
       multiQueryParameters: Record<string, string[]>,
-      headers: Record<string, string>
+      headers: Record<string, string>,
+      uri?: string
     ): Promise<{ statusCode: number; body: string; headers: Record<string, string> }>;
   }
 
 export class ${name} {
   constructor(
-    private readonly caller: Caller
+    private readonly caller: Caller,${servers ? `\n    private readonly serverLookup: {${serverLookupTyped.join('; ')}},\n    public readonly servers: Array<{url: string, variables: Record<string, string>}> = [${servers.join(', ')}]` : ''}
   ){}
+  
+  private server(): string | undefined {
+    if(this.servers.length === 0) return undefined;
+    const server = !this.serverLookup ? this.servers[0] : this.servers.find(it => Object.keys(this.serverLookup).reduce((result, key) => result && (!this.serverLookup[key] || it.variables[key] === this.serverLookup[key]), true));
+    return server && Object.keys(server).filter(it => it !== 'url').reduce((url, key) => url.replace(\`{\${key}}\`, server[key]), server.url);
+  }
+  
 ${sdkMethods.join('\n\n')}
 }
 
