@@ -84,23 +84,25 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   
   hydraResource<K extends keyof T['components']['schemas']>(reference: K): T['components']['schemas'][K] extends {type: 'object'} ? T['components']['schemas'][K] & {type: 'object', properties: {'@id': {type: 'string'}, '@operation': ReturnType<SchemaBuilder<any>['hydraOperation']>}} : never{
     const other: JSONSchema = this.schemaParent.components.schemas[reference];
+    if(!Object.keys(this.schemaParent.components.schemas).includes('HydraOperation')) this.add('HydraOperation', () => this.hydraOperation());
     if(other.type === 'object') {
       return {
         ...other,
         properties: {
           ...other.properties,
           '@id': this.string(),
-          '@operation': this.hydraOperation()
+          '@operation': this.reference('HydraOperation')
         }
       } as any;
     }
     throw new Error('Must be an object to map to hydra resource')
   }
   
-  hydraCollection<K extends keyof T['components']['schemas']>(reference: K): T['components']['schemas'][K] extends {type: 'object'} ? {type: 'object', properties: {'@id': {type: 'string'}, '@operation': ReturnType<SchemaBuilder<any>['hydraOperation']>, 'member': ArraySchema<T['components']['schemas'][K]>}} : never{
+  hydraCollection<K extends keyof T['components']['schemas']>(reference: K): T['components']['schemas'][K] extends {type: 'object'} ? {type: 'object', required: ['@id', '@operation', 'member'], properties: {'@id': {type: 'string'}, '@operation': ReturnType<SchemaBuilder<any>['hydraOperation']>, 'member': ArraySchema<T['components']['schemas'][K]>}} : never{
     const other: JSONSchema = this.schemaParent.components.schemas[reference];
     if(other.type === 'object') {
-      return this.object({'@id': this.string(), '@operation': this.hydraOperation(), member: this.array(other)}) as any
+      if(!Object.keys(this.schemaParent.components.schemas).includes('HydraOperation')) this.add('HydraOperation', () => this.hydraOperation());
+      return this.object({'@id': this.string(), '@operation': this.reference('HydraOperation'), member: this.array(other)}) as any
     }
     throw new Error('Must be an object to map to hydra resource')
   }
@@ -121,10 +123,10 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas: any}}>
     return this.oas;
   }
   
-  jsonContent<K extends keyof S['components']['schemas']>(key: K, example: Schema<S['components']['schemas'][K], S>): {'application/json': OASMedia} {
+  jsonContent<K extends keyof S['components']['schemas']>(key: K, example?: Schema<S['components']['schemas'][K], S>): {'application/json': OASMedia} {
     return {'application/json': this.media(key, example)};
   }
-  textContent(example: string): {'application/text': OASMedia}  {
+  textContent(example?: string): {'application/text': OASMedia}  {
     return {'application/text': {schema: SchemaBuilder.create().string(), example}};
   }
   
@@ -132,7 +134,7 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas: any}}>
     return { [`${statusCode}`]: { description, content, ...(response ?? {}) }} as any
   }
   
-  media<K extends keyof S['components']['schemas']>(key: K, example: Schema<S['components']['schemas'][K], S>): OASMedia {
+  media<K extends keyof S['components']['schemas']>(key: K, example?: Schema<S['components']['schemas'][K], S>): OASMedia {
     return { schema: this.reference(key), example }
   }
   
