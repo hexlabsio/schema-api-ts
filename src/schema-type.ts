@@ -1,5 +1,5 @@
 import {JSONSchema} from "json-schema-to-typescript";
-import {OASEncoding, OASInfo, OASMedia, OASResponse} from "./oas";
+import {OASEncoding, OASInfo, OASMedia} from "./oas";
 import {OAS, OASComponents} from "./oas";
 
 type UnionToTuple<T> = (
@@ -155,12 +155,8 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas: any, r
     return {'application/text': {schema: SchemaBuilder.create().string(), example, examples, encoding}};
   }
   
-  responseRef<C extends number, K extends keyof S['components']['responses']>(statusCode: C, key: K): { [k in K]: {'$ref': K extends string ? `#/components/responses/${K}` : string} } {
-    return { [`${statusCode}`]: { '$ref': `#/components/responses/${key}` }} as any;
-  }
-  
-  response<K extends number>(statusCode: K, description: string, content: Record<string, OASMedia>, response?: OASResponse): { [k in K]: OASResponse } {
-    return { [`${statusCode}`]: { description, content, ...(response ?? {}) }} as any
+  responseReference<K extends keyof S['components']['responses']>(key: K): {'$ref': K extends string ? `#/components/responses/${K}` : string} {
+    return this.componentReference('responses', key);
   }
   
   media<K extends keyof S['components']['schemas']>(
