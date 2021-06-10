@@ -83,15 +83,9 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
     } as any
   }
   
-  anyOf<S extends (builder: SchemaBuilder<T>) => any>(builder: S): S extends (...args: any) => infer O ? { anyOf: O } : never {
-    return { anyOf: builder(this) } as any;
-  }
-  allOf<S extends (builder: SchemaBuilder<T>) => any>(builder: S): S extends (...args: any) => infer O ? { allOf: O } : never {
-    return { allOf: builder(this) } as any;
-  }
-  oneOf<S extends (builder: SchemaBuilder<T>) => any>(builder: S): S extends (...args: any) => infer O ? { oneOf: O } : never {
-    return { oneOf: builder(this) } as any;
-  }
+  anyOf<S extends any[]>(...items: S): { anyOf: S } { return { anyOf: items } as any; }
+  allOf<S extends any[]>(...items: S): { allOf: S } { return { allOf: items } as any; }
+  oneOf<S extends any[]>(...items: S): { oneOf: S } { return { oneOf: items } as any; }
   
   list<T extends any[]>(...items: T): T {
     return items;
