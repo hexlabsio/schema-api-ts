@@ -49,7 +49,7 @@ type Combine<A,B> = A extends undefined ? ( B extends undefined ? never : B) : (
 type ObjectSchema<A extends boolean | JSONSchema | undefined = false, R extends Record<string, JSONSchema>| undefined = undefined, O extends JSONSchema | undefined= undefined> = Stripped<{type: 'object', title: string, additionalProperties: A extends undefined ? never : A, required: R extends undefined ? never: UnionToTuple<keyof R>, properties: Combine<R,O> }>;
 type ArraySchema<R, A extends boolean | JSONSchema | undefined = undefined> = Stripped<{type: 'array', title: string, additionalItems: A extends undefined ? never : A, items: R }>;
 
-export class SchemaBuilder<T extends {components:{schemas?: any}}> {
+export class SchemaBuilder<T extends {components:{schemas: any}}> {
   
   private constructor(private readonly schemaParent: T, private readonly title?: string) {}
   
@@ -126,7 +126,7 @@ export class SchemaBuilder<T extends {components:{schemas?: any}}> {
     throw new Error('Must be an object to map to hydra resource')
   }
   
-  add<K extends string, B extends (builder: SchemaBuilder<{components:{schemas?: T['components']['schemas'] & {[k in K]: any}}}>) => any>(name: K, schema: B): B extends (s: any) => infer S ? SchemaBuilder<T & {components:{schemas: {[k in K]: S }}}>: never {
+  add<K extends string, B extends (builder: SchemaBuilder<T & {components:{schemas: {[k in K]: any }}}>) => any>(name: K, schema: B): B extends (s: any) => infer S ? SchemaBuilder<T & {components:{schemas: {[k in K]: S }}}>: never {
     return new SchemaBuilder({components: {schemas: {...this.schemaParent.components.schemas, [name]: schema(new SchemaBuilder(this.schemaParent, name)) }}}, name) as any;
   }
   
