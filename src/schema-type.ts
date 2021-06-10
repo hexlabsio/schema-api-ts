@@ -25,8 +25,8 @@ type Ref<S, R extends string> = R extends `${infer Start}/${infer Rest}` ? (Star
 type FromProps<S, O = S> = S extends {properties: any} ? { -readonly [K in keyof S['properties']]: Schema<S['properties'][K], O> } : {};
 type FromArray<S, O = S> = S extends {items: readonly any[]} ? FromTuple<S['items'], O> : S extends {items: any} ? Array<Schema<S['items'], O>> : never;
 type FromTuple<T extends readonly any[], O> = T extends readonly [infer HEAD, ...infer TAIL] ? [Schema<HEAD, O>, ...FromTuple<TAIL, O>]: [];
-type AllOf<T extends any[], O> = T extends readonly [infer HEAD, ...infer TAIL] ? Schema<HEAD, O> & AllOf<TAIL, O>: {}
-type AnyOf<T extends any[], O> = T extends readonly [infer HEAD, ...infer TAIL] ? Schema<HEAD, O> | AnyOf<TAIL, O>: {}
+type AllOf<T extends any[], O> = T extends readonly [infer HEAD] ? Schema<HEAD> : T extends readonly [infer HEAD, ...infer TAIL] ? Schema<HEAD, O> & AllOf<TAIL, O>: never
+type AnyOf<T extends any[], O> = T extends readonly [infer HEAD] ? Schema<HEAD> : T extends readonly [infer HEAD, ...infer TAIL] ? Schema<HEAD, O> | AnyOf<TAIL, O>: never
 type AdditionalProps<T, S, O> = S extends { additionalProperties: false } ? T : (S extends { additionalProperties: true } ? T & {[key: string]: unknown} : (S extends {additionalProperties: any} ? T & {[key: string]: Schema<S['additionalProperties'], O>} : T & {[key: string]: unknown}));
 type Required<T, S> = S extends { required: readonly [...infer R] } ? { [K in keyof T]-?: K extends KeysIn<R> ? T[K] : T[K] | undefined}: Partial<T>
 type KeysIn<T extends any[]> = T extends [infer HEAD] ? HEAD : T extends [infer HEAD, ...infer TAIL] ? HEAD | KeysIn<TAIL> : never;
@@ -83,15 +83,33 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
     } as any
   }
   
-  string<P extends JSONSchema| undefined = undefined>(parts?: P): Combine<{type: 'string'}, P> {
+  anyOf<S extends (builder: SchemaBuilder<T>) => any>(builder: S): S extends (...args: any) => infer O ? { anyOf: O } : never {
+    return { anyOf: builder(this) } as any;
+  }
+  allOf<S extends (builder: SchemaBuilder<T>) => any>(builder: S): S extends (...args: any) => infer O ? { allOf: O } : never {
+    return { allOf: builder(this) } as any;
+  }
+  oneOf<S extends (builder: SchemaBuilder<T>) => any>(builder: S): S extends (...args: any) => infer O ? { oneOf: O } : never {
+    return { oneOf: builder(this) } as any;
+  }
+  
+  list<T extends any[]>(...items: T): T {
+    return items;
+  }
+  
+  stringWith<P>(parts: P): Combine<{type: 'string'}, P> {
     return {type: 'string', ...(parts ?? {})} as any;
   }
-  number<P extends JSONSchema| undefined = undefined>(parts: P = undefined as unknown as P): Combine<{type: 'number'}, P> {
+  numberWith<P>(parts: P): Combine<{type: 'number'}, P> {
     return {type: 'number', ...(parts ?? {})} as any;
   }
-  boolean<P extends JSONSchema | undefined = undefined>(parts: P = undefined as unknown as P): Combine<{type: 'boolean'}, P> {
+  booleanWith<P extends JSONSchema>(parts: P): Combine<{type: 'boolean'}, P> {
     return {type: 'boolean', ...(parts ?? {})} as any;
   }
+  
+  string(): {type: 'string'} { return {type: 'string'} }
+  number(): {type: 'number'} { return {type: 'number'} }
+  boolean(): {type: 'boolean'} { return {type: 'boolean'} }
   
   reference<K extends keyof T['components']['schemas']>(key: K): { '$ref': K extends string ? `#/components/schemas/${K}` : string } {
     return { '$ref': `#/components/schemas/${key}` } as any;
