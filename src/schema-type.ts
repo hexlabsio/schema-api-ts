@@ -113,12 +113,13 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
     return this.object({statusCodes: this.array(this.string()), method: this.string()}, {expects: this.string(), returns: this.string()});
   }
   
-  hydraResource<K extends keyof T['components']['schemas']>(reference: K): T['components']['schemas'][K] extends {type: 'object'} ? T['components']['schemas'][K] & {type: 'object', properties: {'@id': {type: 'string'}, '@operation': ReturnType<SchemaBuilder<any>['hydraOperation']>}} : never{
+  hydraResource<K extends keyof T['components']['schemas']>(reference: K): T['components']['schemas'][K] extends {type: 'object'} ? T['components']['schemas'][K] & {type: 'object', required: ['@id', '@operation'], properties: {'@id': {type: 'string'}, '@operation': ReturnType<SchemaBuilder<any>['hydraOperation']>}} : never{
     const other: JSONSchema = this.schemaParent.components.schemas[reference];
     if(!Object.keys(this.schemaParent.components.schemas).includes('HydraOperation')) throw new Error('HydraOperation must first be defined in the schema')
     if(other.type === 'object') {
       return {
         ...other,
+        required: [...(other.required as string[] ?? []), '@id', '@operation'],
         properties: {
           ...other.properties,
           '@id': this.string(),
