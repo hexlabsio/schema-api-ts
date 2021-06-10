@@ -7,7 +7,7 @@ type FromProps<S, O = S> = S extends {properties: any} ? { -readonly [K in keyof
 type FromArray<S, O = S> = S extends {items: readonly any[]} ? FromTuple<S['items'], O> : S extends {items: any} ? Array<Schema<S['items'], O>> : never;
 type FromTuple<T extends readonly any[], O> = T extends readonly [infer HEAD, ...infer TAIL] ? [Schema<HEAD, O>, ...FromTuple<TAIL, O>]: [];
 type AllOf<T extends any[], O> = T extends readonly [infer HEAD, ...infer TAIL] ? Schema<HEAD, O> & AllOf<TAIL, O>: {}
-type AnyOf<T extends any[], O> = T extends readonly [infer HEAD, ...infer TAIL] ? Schema<HEAD, O> | AllOf<TAIL, O>: {}
+type AnyOf<T extends any[], O> = T extends readonly [infer HEAD, ...infer TAIL] ? Schema<HEAD, O> | AnyOf<TAIL, O>: {}
 type AdditionalProps<T, S, O> = S extends { additionalProperties: false } ? T : (S extends { additionalProperties: true } ? T & {[key: string]: unknown} : (S extends {additionalProperties: any} ? T & {[key: string]: Schema<S['additionalProperties'], O>} : T & {[key: string]: unknown}));
 type Required<T, S> = S extends { required: readonly [...infer R] } ? { [K in keyof T]-?: K extends KeysIn<R> ? T[K] : T[K] | undefined}: Partial<T>
 type KeysIn<T extends any[]> = T extends [infer HEAD] ? HEAD : T extends [infer HEAD, ...infer TAIL] ? HEAD | KeysIn<TAIL> : never;
