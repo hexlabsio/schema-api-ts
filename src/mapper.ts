@@ -111,7 +111,7 @@ export class Path {
 `
     const validationFunctions = typesToValidate.map(typeName =>`    validate${typeName}(item: string): Model.${typeName} {
       const mapped: Model.${typeName} = JSON.parse(item);
-      const validation = Validator.validateUnknown(item, '#/components/schemas/${typeName}', {schema, current: schema.components.schemas.${typeName}});
+      const validation = Validator.validateUnknown(mapped, '#/components/schemas/${typeName}', {schema, current: schema.components.schemas.${typeName}});
       if(validation.length > 0) throw new HttpError(400, JSON.stringify(validation));
       return mapped;
     }`);
