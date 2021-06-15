@@ -1,11 +1,12 @@
 import { PathInfo } from "@hexlabs/kloudformation-ts/dist/kloudformation/modules/api";
-
-import {OAS, OASOperation, OASParameter, OASPath, OASRef, OASSecurityScheme} from "./oas";
+import {OAS, OASOperation, OASParameter, OASPath, OASRef, OASRequestBody, OASSecurityScheme} from "./oas";
 export class Method {
-  constructor(public readonly method: string,
+  constructor(
+    public readonly method: string,
     public readonly statusCodes: string[] = [],
     public readonly queryParams: string[] = [],
     public readonly scopes: string[] = [],
+    public readonly requestType?: string,
     public readonly operationId?: string
   ) { }
 
@@ -36,7 +37,9 @@ export class Path {
       Object.keys(path).filter(it => methods.includes(it)).forEach(method => {
           const definition = (path as any)[method] as OASOperation;
           const scopes = (definition.security ?? []).flatMap(it => Object.keys(it).flatMap(key => it[key]))
-          this.methods.push(new Method(method, Object.keys(definition.responses), queryParams, [...new Set(scopes)], definition.operationId))
+          const requestType = (definition.requestBody as OASRequestBody)?.content?.['application/json']?.schema?.$ref;
+          const requestTypeName = requestType?.substring(requestType?.lastIndexOf('/') + 1);
+          this.methods.push(new Method(method, Object.keys(definition.responses), queryParams, [...new Set(scopes)], requestTypeName, definition.operationId))
         }
       );
     } else {
@@ -76,6 +79,7 @@ export class Path {
     const nextParentParts = [...parentParts, this.part];
     const methodDefinitions = this.methods.map(method => method.routerDefinition(spacing + '  ', nextParentNames, nextParameters));
     const resourceDefinitions = this.paths.map(path => path.routerDefinition(spacing + '  ', nextParentNames, nextParentParts, nextParameters));
+    const typesToValidate = this.methods.filter(method => !!method.requestType).map(method => method.requestType!);
     const methodBinds = methodDefinitions.map(it => it[0]);
     const resourceBinds = resourceDefinitions.map(it => it[0]);
     const idFunctions = resourceDefinitions.flatMap(it => it[2]);
@@ -105,7 +109,13 @@ export class Path {
       }
     }
 `
-    return [`${spacing}bind('/${this.part}', router([\n${[...methodBinds, ...resourceBinds].join(',\n')}\n${spacing}]))`, methods, [...idFunctions, idFunction, operationsFunction, resourceDefinitionFunction, collectionDefinitionFunction]];
+    const validationFunctions = typesToValidate.map(typeName =>`    validate${typeName}(view: Model.${typeName}) {
+      const validation = Validator.validateUnknown(view, '#/components/schemas/${typeName}', {schema, current: schema.components.schemas.${typeName}});
+      if(validation.length > 0) {
+        return new HttpError(400, JSON.stringify(validation));
+      }
+    }`);
+    return [`${spacing}bind('/${this.part}', router([\n${[...methodBinds, ...resourceBinds].join(',\n')}\n${spacing}]))`, methods, [...idFunctions, idFunction, operationsFunction, resourceDefinitionFunction, collectionDefinitionFunction, ...validationFunctions]];
   }
 }
 
@@ -141,10 +151,12 @@ export class PathFinder {
    */
   apiDefinition(version?: string): string {
     const [router, methods, idFunctions] = this.routerDefinition();
-    return `//eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-nocheck
-import {Api, bind, Handler, HandlerWithParams, HttpMethod, lookup, route, router} from '@hexlabs/apigateway-ts';
+    return `import {bind, Handler, HandlerWithParams, HttpMethod, HttpError, router} from '@hexlabs/apigateway-ts';
 import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const schema = require('./schema.json');
+import * as Model from "./model";
+import {Validator} from '../../src/validator';
 
 export class ${this.apiName}<S extends string = string> {
 

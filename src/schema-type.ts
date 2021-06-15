@@ -45,7 +45,6 @@ type FilteredKeys<T> = { [P in keyof T]: T[P] extends never ? never : P }[keyof 
 type Stripped<T> = { [Q in FilteredKeys<T>]: T[Q] };
 
 type Combine<A,B> = A extends undefined ? ( B extends undefined ? never : B) : ( B extends undefined ? A : A & B)
-
 type ObjectSchema<A extends boolean | JSONSchema | undefined = false, R extends Record<string, JSONSchema>| undefined = undefined, O extends JSONSchema | undefined= undefined> = Stripped<{type: 'object', title: string, additionalProperties: A extends undefined ? never : A, required: R extends undefined ? never: UnionToTuple<keyof R>, properties: Combine<R,O> }>;
 type ArraySchema<R, A extends boolean | JSONSchema | undefined = undefined> = Stripped<{type: 'array', title: string, additionalItems: A extends undefined ? never : A, items: R }>;
 
@@ -97,13 +96,21 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   numberWith<P>(parts: P): Combine<{type: 'number'}, P> {
     return {type: 'number', ...(parts ?? {})} as any;
   }
+  integerWith<P>(parts: P): Combine<{type: 'integer'}, P> {
+    return {type: 'integer', ...(parts ?? {})} as any;
+  }
   booleanWith<P extends JSONSchema>(parts: P): Combine<{type: 'boolean'}, P> {
     return {type: 'boolean', ...(parts ?? {})} as any;
+  }
+  nullWith<P extends JSONSchema>(parts: P): Combine<{type: 'null'}, P> {
+    return {type: 'null', ...(parts ?? {})} as any;
   }
   
   string(): {type: 'string'} { return {type: 'string'} }
   number(): {type: 'number'} { return {type: 'number'} }
+  integer(): {type: 'integer'} { return {type: 'integer'} }
   boolean(): {type: 'boolean'} { return {type: 'boolean'} }
+  null(): {type: 'null'} { return {type: 'null'} }
   
   reference<K extends keyof T['components']['schemas']>(key: K): { '$ref': K extends string ? `#/components/schemas/${K}` : string } {
     return { '$ref': `#/components/schemas/${key}` } as any;

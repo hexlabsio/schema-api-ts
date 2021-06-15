@@ -31,6 +31,9 @@ jobs:
       - name: Production Build
         run: npm run build
 
+      - name: Test
+        run: npm test
+
       - name: Package
         run: npm pack
 
