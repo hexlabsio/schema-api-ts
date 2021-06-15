@@ -13,7 +13,7 @@ export class Method {
 
   routerDefinition(spacing: string, parentNames: string, pathParameters: string[]): [string, string[]] {
     const name = this.operationId ?? `${this.method}${parentNames}Handler`;
-    const mapType = (parameters: string[]) => `{${parameters.map(param => `${param}?: string;`).join(' ')}}`;
+    const mapType = (parameters: string[]) => `{${parameters.map(param => `${param}?: string`).join('; ')}}`;
     const handlerType = pathParameters.length === 0 
       ? 'Handler' 
       : `HandlerWithParams<${mapType(pathParameters)}` + (this.queryParams.length === 0 ? '>' : `, ${mapType(this.queryParams)}>`);
