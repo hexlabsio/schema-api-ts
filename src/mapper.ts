@@ -109,11 +109,11 @@ export class Path {
       }
     }
 `
-    const validationFunctions = typesToValidate.map(typeName =>`    validate${typeName}(view: Model.${typeName}) {
-      const validation = Validator.validateUnknown(view, '#/components/schemas/${typeName}', {schema, current: schema.components.schemas.${typeName}});
-      if(validation.length > 0) {
-        return new HttpError(400, JSON.stringify(validation));
-      }
+    const validationFunctions = typesToValidate.map(typeName =>`    validate${typeName}(item: string): Model.${typeName} {
+      const mapped: Model.${typeName} = JSON.parse(item);
+      const validation = Validator.validateUnknown(item, '#/components/schemas/${typeName}', {schema, current: schema.components.schemas.${typeName}});
+      if(validation.length > 0) throw new HttpError(400, JSON.stringify(validation));
+      return item;
     }`);
     return [`${spacing}bind('/${this.part}', router([\n${[...methodBinds, ...resourceBinds].join(',\n')}\n${spacing}]))`, methods, [...idFunctions, idFunction, operationsFunction, resourceDefinitionFunction, collectionDefinitionFunction, ...validationFunctions]];
   }

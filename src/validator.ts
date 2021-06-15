@@ -326,7 +326,7 @@ class ObjectValidator {
     if(aps === undefined || aps === true) return [];
     const excessKeys = Object.keys(value ?? {}).filter(it => !ps.includes(it));
     if(excessKeys.length === 0) return [];
-    if(aps === false) return [{value, location, schema, message: `Expected no additiona properties but found the following: [${excessKeys.join(', ')}]`}];
+    if(aps === false) return [{value, location, schema, message: `Expected no additional properties but found the following: [${excessKeys.join(', ')}]`}];
     return excessKeys.flatMap(property => {
       const subElement = value[property];
       return Validator.validateUnknown(subElement, `${location}/${property}`, {schema: schema.schema, current: aps})
