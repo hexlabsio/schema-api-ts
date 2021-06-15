@@ -156,7 +156,7 @@ import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const schema = require('./schema.json');
 import * as Model from "./model";
-import {Validator} from '../../src/validator';
+import {Validator} from '@hexlabs/schema-api-ts';
 
 export class ${this.apiName}<S extends string = string> {
 
