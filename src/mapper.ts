@@ -151,7 +151,8 @@ export class PathFinder {
    */
   apiDefinition(version?: string): string {
     const [router, methods, idFunctions] = this.routerDefinition();
-    return `import {bind, Handler, HandlerWithParams, HttpMethod, HttpError, router} from '@hexlabs/apigateway-ts';
+    return `//@ts-nocheck
+import {bind, Handler, HandlerWithParams, HttpMethod, HttpError, router} from '@hexlabs/apigateway-ts';
 import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const schema = require('./schema.json');
