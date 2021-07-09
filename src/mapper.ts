@@ -25,7 +25,7 @@ function isOASParam(param: OASParameter | OASRef): param is OASParameter {
   return !Object.keys(param).includes("$ref");
 }
 export class Path {
-  constructor(public part: string, public paths: Path[] = [], public methods: Method[] = []) {
+  constructor(public part: string, public paths: Path[] = [], public methods: Method[] = [], private hydra = false) {
   }
 
   append(route: string[], path: OASPath, securitySchemes?: Record<string, OASSecurityScheme | OASRef>): this {
@@ -48,7 +48,7 @@ export class Path {
       if (existing) {
         existing.append(rest, path, securitySchemes);
       } else {
-        this.paths.push(new Path(root).append(rest, path, securitySchemes));
+        this.paths.push(new Path(root, [], [], this.hydra).append(rest, path, securitySchemes));
       }
     }
     return this;
@@ -115,13 +115,13 @@ export class Path {
       if(validation.length > 0) throw new HttpError(400, JSON.stringify(validation));
       return mapped;
     }`);
-    return [`${spacing}bind('/${this.part}', router([\n${[...methodBinds, ...resourceBinds].join(',\n')}\n${spacing}]))`, methods, [...idFunctions, idFunction, operationsFunction, resourceDefinitionFunction, collectionDefinitionFunction, ...validationFunctions]];
+    return [`${spacing}bind('/${this.part}', router([\n${[...methodBinds, ...resourceBinds].join(',\n')}\n${spacing}]))`, methods, [...idFunctions, idFunction, ...(this.hydra ? [operationsFunction, resourceDefinitionFunction, collectionDefinitionFunction] : []), ...validationFunctions]];
   }
 }
 
 export class PathFinder {
 
-  constructor(public apiName: string, public paths: Path[] = []) { }
+  constructor(public apiName: string, public paths: Path[] = [], private readonly hydra = false) { }
 
   append(route: string, path: OASPath, securitySchemes?: Record<string, OASSecurityScheme | OASRef>): this {
     const [root, ...rest] = route.substring(1).split('/');
@@ -129,7 +129,7 @@ export class PathFinder {
     if (existing) {
       existing.append(rest, path, securitySchemes);
     } else {
-      this.paths.push(new Path(root).append(rest, path, securitySchemes));
+      this.paths.push(new Path(root, [], [], this.hydra).append(rest, path, securitySchemes));
     }
     return this;
   }
@@ -153,7 +153,7 @@ export class PathFinder {
     const [router, methods, idFunctions] = this.routerDefinition();
     return `//@ts-nocheck
 import {bind, Handler, HandlerWithParams, HttpMethod, HttpError, router, Request} from '@hexlabs/http-api-ts';
-import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';
+${this.hydra ? "import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';" : ""}
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const schema = require('./schema.json');
 import * as Model from "./model";
@@ -171,9 +171,9 @@ ${idFunctions.join('\n')}
 }`;
   }
 
-  static from(openapi: OAS): PathFinder {
+  static from(openapi: OAS, hydra: boolean): PathFinder {
     return Object.keys(openapi.paths).reduce((pathFinder, path) => {
       return pathFinder.append(path, openapi.paths[path] as OASPath, openapi.components?.securitySchemes);
-    }, new PathFinder(openapi.info.title.replace(/\W+/g, '')));
+    }, new PathFinder(openapi.info.title.replace(/\W+/g, ''), [], hydra));
   }
 }

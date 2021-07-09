@@ -21,10 +21,11 @@ export async function types(oas: OAS): Promise<string> {
   return await compile(fakeSchema, '__ALL__', {bannerComment: ''});
 }
 
-async function generateFromSchema(schemaLocation: string) {
+async function generateFromSchema(schemaLocation: string, command: any) {
+  const hydra = command.hydra;
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const schema: OAS = schemaLocation.endsWith('.ts') ? require(schemaLocation).default : require(schemaLocation);
-  const pathFinder = PathFinder.from(schema);
+  const pathFinder = PathFinder.from(schema, hydra);
   const args = process.argv;
   const version = args.find(it => it.startsWith('v='))?.substring(2);
   const apiDefinition = pathFinder.apiDefinition(version);
@@ -49,6 +50,7 @@ async function generateMockFromSchema(schemaLocation: string) {
 
 function generate(): any {
   return program.command('generate <schemaLocation>')
+  .option('-h, --hydra', 'Include Operations, Collections and Resources', false)
   .action(generateFromSchema)
 }
 
