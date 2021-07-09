@@ -77,7 +77,7 @@ export class Path {
     const nextParentParts = [...parentParts, this.part];
     const methodDefinitions = this.methods.map(method => method.routerDefinition(spacing + '  ', nextParentNames, nextParameters));
     const resourceDefinitions = this.paths.map(path => path.routerDefinition(spacing + '  ', nextParentNames, nextParentParts, nextParameters));
-    const typesToValidate = this.methods.filter(method => !!method.requestType).map(method => method.requestType!);
+    const typesToValidate = [...new Set(this.methods.filter(method => !!method.requestType).map(method => method.requestType!))];
     const methodBinds = methodDefinitions.map(it => it[0]);
     const resourceBinds = resourceDefinitions.map(it => it[0]);
     const idFunctions = resourceDefinitions.flatMap(it => it[2]);
