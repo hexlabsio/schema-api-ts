@@ -78,7 +78,7 @@
   },
   "homepage": "https://github.com/hexlabsio/schema-api-ts#readme",
   "devDependencies": {
-    "@hexlabs/apigateway-ts": "^1.1.21",
+    "@hexlabs/http-api-ts": "^1.1.29",
     "@hexlabs/kloudformation-ts": "^1.1.140",
     "@hexlabs/lambda-api-ts": "^0.1.9",
     "@types/aws-lambda": "^8.10.40",

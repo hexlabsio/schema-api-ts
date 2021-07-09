@@ -143,7 +143,7 @@ export class PathFinder {
     const binds = definitions.map(it => it[0]);
     const methods = definitions.flatMap(it => it[1]);
     const idFunctions = definitions.flatMap(it => it[2]);
-    return [`router([\n${binds.join(',\n')}\n    ])`, methods, idFunctions];
+    return [`router<Req, Response>([\n${binds.join(',\n')}\n    ])`, methods, idFunctions];
   }
 
   /**
@@ -152,14 +152,14 @@ export class PathFinder {
   apiDefinition(version?: string): string {
     const [router, methods, idFunctions] = this.routerDefinition();
     return `//@ts-nocheck
-import {bind, Handler, HandlerWithParams, HttpMethod, HttpError, router} from '@hexlabs/apigateway-ts';
+import {bind, Handler, HandlerWithParams, HttpMethod, HttpError, router, Request} from '@hexlabs/http-api-ts';
 import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const schema = require('./schema.json');
 import * as Model from "./model";
 import {Validator} from '@hexlabs/schema-api-ts';
 
-export class ${this.apiName}<S extends string = string> {
+export class ${this.apiName}<Req extends Request, Response, S extends string = string> {
 
     constructor(protected readonly host: string, protected readonly basePath: string, public readonly version = '${version ?? '1.0.0'}'){}
     
