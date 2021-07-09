@@ -161,7 +161,7 @@ import {Validator} from '@hexlabs/schema-api-ts';
 
 export class ${this.apiName}<Req extends Request, Response, S extends string = string> {
 
-    constructor(protected readonly host: string, protected readonly basePath: string, public readonly version = '${version ?? '1.0.0'}'){}
+    constructor(${this.hydra ? "protected readonly host: string, protected readonly basePath: string, " : ""}public readonly version = '${version ?? '1.0.0'}'){}
     
     public readonly handle = ${router};
     
