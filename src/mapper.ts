@@ -165,7 +165,7 @@ export class ${this.apiName}<Req extends Request, Response, S extends string = s
     
 ${methods.map(method => `    ${method} = async () => ({ statusCode: 501, body: 'Not Implemented' });`).join('\n')}
 
-${idFunctions.join('\n')}
+${[...new Set(idFunctions)].join('\n')}
 }`;
   }
 
