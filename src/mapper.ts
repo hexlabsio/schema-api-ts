@@ -13,10 +13,8 @@ export class Method {
 
   routerDefinition(spacing: string, parentNames: string, pathParameters: string[]): [string, string[]] {
     const name = this.operationId ?? `${this.method}${parentNames}Handler`;
-    const mapType = (parameters: string[]) => `{${parameters.map(param => `${param}?: string`).join('; ')}}`;
-    const handlerType = pathParameters.length === 0 
-      ? 'Handler' 
-      : `HandlerWithParams<${mapType(pathParameters)}` + (this.queryParams.length === 0 ? '>' : `, ${mapType(this.queryParams)}>`);
+    //const mapType = (parameters: string[]) => `{${parameters.map(param => `${param}?: string`).join('; ')}}`;
+    const handlerType = 'Handler<Req, Response>';
     return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, (...args) => this.${name}(...args))`, [name + `: ${handlerType}`]];
   }
 }
@@ -152,7 +150,7 @@ export class PathFinder {
   apiDefinition(version?: string): string {
     const [router, methods, idFunctions] = this.routerDefinition();
     return `//@ts-nocheck
-import {bind, Handler, HandlerWithParams, HttpMethod, HttpError, router, Request} from '@hexlabs/http-api-ts';
+import {bind, Handler, HttpMethod, HttpError, router, Request} from '@hexlabs/http-api-ts';
 ${this.hydra ? "import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';" : ""}
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const schema = require('./schema.json');
