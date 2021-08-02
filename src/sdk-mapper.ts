@@ -196,13 +196,13 @@ export type Caller = {
 
 export class ${name} {
   constructor(
-    private readonly caller: Caller,${servers ? `\n    private readonly serverLookup: {${serverLookupTyped.join('; ')}},\n    public readonly servers: Array<{url: string; variables: Record<string, string>}> = [${servers.join(', ')}]` : ''}
+    private readonly caller: Caller,${servers ? `\n    private readonly serverLookup?: {${serverLookupTyped.join('; ')}},\n    public readonly servers: Array<{url: string; variables: Record<string, string>}> = [${servers.join(', ')}]` : ''}
   ){}
   
     private server(): string | undefined {
       if(this.servers.length === 0) return undefined;
       const server = !this.serverLookup ? this.servers[0] : this.servers.find(it => Object.keys(this.serverLookup).reduce((result, key) => result && (!(this.serverLookup as any)[key] || it.variables[key] === (this.serverLookup as any)[key]), true as boolean));
-      return server && Object.keys(server).filter(it => it !== 'url').reduce((url, key) => url.replace(\`{\${key}}\`, server.variables[key]), server.url);
+      return server && Object.keys(server.variables).reduce((url, key) => url.replace(\`{\${key}}\`, server.variables[key]), server.url);
     }
   
 ${sdkMethods.join('\n\n')}
