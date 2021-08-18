@@ -107,6 +107,13 @@ describe('Validation', () => {
       expect(Validator.validate({a: 'b'}, schema)).toEqual([]);
       expect(Validator.validate({a: 'b', b: 78}, schema)).toEqual([{value: 78, schema: s.boolean(), location: '#/b', message: 'Expected value to be a boolean'}]);
     });
+  
+    it('should validate anyof', () => {
+      const schema: JSONSchema = { anyOf: [{type: 'string', const: 'X'}, {type: 'string', const: 'Y'}]}
+      expect(Validator.validate('X', schema)).toEqual([]);
+      expect(Validator.validate('Y', schema)).toEqual([]);
+      expect(Validator.validate('T', schema).length).toEqual(1);
+    });
   });
   
 });

@@ -53,7 +53,16 @@ export class Validator {
       case 'array': return ArrayValidator.validate(value, location, info);
       case 'boolean': return BooleanValidator.validate(value, location, info);
       case 'null': return NullValidator.validate(value, location, info);
-      default: return ObjectValidator.validate(value, location, info);
+      default: {
+        if(current.anyOf) {
+          if(current.anyOf.find(anySchema => Validator.validate(value, anySchema, schema.schema).length === 0)) {
+            return [];
+          } else {
+            return [{value, schema, location, message: 'Failed to satisfy any of the subschemas'}];
+          }
+        }
+        return ObjectValidator.validate(value, location, info);
+      }
     }
   }
   
