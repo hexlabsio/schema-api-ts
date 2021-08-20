@@ -23,8 +23,8 @@ export class Method {
     const name = this.operationId ?? `${this.method}${parentNames}Handler`;
     const singleQueries = this.queryParams.filter(it => !it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string`).join('; ');
     const multiQueries = this.queryParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string[]`).join('; ');
-    const singleHeaders = this.headerParams.filter(it => !it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string`).join('; ');
-    const multiHeaders = this.headerParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string[]`).join('; ');
+    const singleHeaders = this.headerParams.filter(it => !it.multi).map(param => `['${param.name}']?: string`).join('; ');
+    const multiHeaders = this.headerParams.filter(it => it.multi).map(param => `['${param.name}']?: string[]`).join('; ');
     const paths = pathParameters.map(it => `${it}: string`).join('; ');
     const handlerType = `(request: ${this.aws ? `APIGatewayProxyEvent, parts: Parts<{${singleQueries}},{${multiQueries}},{${paths}},{${singleHeaders}},{${multiHeaders}}>` : 'Req'}) => Promise<${this.aws ? 'APIGatewayProxyResult' : 'Response'}>`;
     return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, ${this.aws ? 'mapped(': ''}this.handlers.${name}?.bind(this) ?? (async () => ({statusCode: 501, body: 'Not Implemented'})))${this.aws ? ')': ''}`, [name + `: ${handlerType}`]];
@@ -183,9 +183,22 @@ ${this.aws ? `export interface Parts<Q extends Record<string, string>,MQ extends
   multiHeaders: MH,
 }
 
-function mapped(fn: (request: APIGatewayProxyEvent, parts: Parts<any, any, any, any, any>) => Promise<APIGatewayProxyResult>): Handler<APIGatewayProxyEvent, APIGatewayProxyResult> {
-  return event => fn(event, {query: event.queryStringParameters ?? {}, multiQuery: event.multiValueQueryStringParameters ?? {}, path: event.pathParameters ?? {}, headers: event.headers ?? {}, multiHeaders: event.multiValueHeaders ?? {}});
-}` : ''}
+function mapped(headers: string[], multiHeaders: string[], fn: (request: APIGatewayProxyEvent, parts: Parts<any, any, any, any, any>) => Promise<APIGatewayProxyResult>): Handler<APIGatewayProxyEvent, APIGatewayProxyResult> {
+  return event => {
+    const eventHeaders = Object.keys(event.headers ?? {});
+    const selectedHeaders = headers.reduce((newHeaders, name) => {
+      const match = eventHeaders.find(h => name.toLowerCase() === h.toLowerCase());
+      return {...newHeaders, [name]: match ? eventHeaders[match] : undefined};
+    }, {} as any);
+    const eventMultiHeaders = Object.keys(event.multiValueHeaders ?? {});
+    const selectedMultiHeaders = multiHeaders.reduce((newHeaders, name) => {
+      const match = eventMultiHeaders.find(h => name.toLowerCase() === h.toLowerCase());
+      return {...newHeaders, [name]: match ? eventMultiHeaders[match] : undefined};
+    }, {} as any);
+    return fn(event, {query: event.queryStringParameters ?? {}, multiQuery: event.multiValueQueryStringParameters ?? {}, path: event.pathParameters ?? {}, headers: selectedHeaders, multiHeaders: selectedMultiHeaders});
+  }
+}
+` : ''}
 
 export interface ${this.apiName}Handlers${interfaceGenerics} {
 ${methods.map(method => `    ${method};`).join('\n')}
