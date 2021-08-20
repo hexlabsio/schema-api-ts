@@ -27,7 +27,7 @@ export class Method {
     const multiHeaders = this.headerParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string[]`).join('; ');
     const paths = pathParameters.map(it => `${it}: string`).join('; ');
     const handlerType = `(request: ${this.aws ? `APIGatewayProxyEvent, parts: Parts<{${singleQueries}},{${multiQueries}},{${paths}},{${singleHeaders}},{${multiHeaders}}>` : 'Req'}) => Promise<${this.aws ? 'APIGatewayProxyResult' : 'Response'}>`;
-    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, ${this.aws ? 'mapped(': ''}this.handlers.${name}.bind(this))${this.aws ? ')': ''}`, [name + `: ${handlerType}`]];
+    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, ${this.aws ? 'mapped(': ''}this.handlers.${name}?.bind(this) ?? (async () => ({statusCode: 501, body: 'Not Implemented'})))${this.aws ? ')': ''}`, [name + `: ${handlerType}`]];
   }
 }
 
@@ -197,7 +197,7 @@ export class ${this.apiName}${generics} {
     
     public readonly handlers: Partial<${this.apiName}Handlers${this.aws ? '' : '<Req, Response>'}> = {};
     
-    public readonly handle = ${router};
+    public readonly routes = () => ${router};
 
 ${[...new Set(idFunctions)].join('\n')}
 }`;
