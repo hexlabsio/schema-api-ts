@@ -1,21 +1,33 @@
 import { PathInfo } from "@hexlabs/kloudformation-ts/dist/kloudformation/modules/api";
 import {OAS, OASOperation, OASParameter, OASPath, OASRef, OASRequestBody, OASSecurityScheme} from "./oas";
+
+interface ParamType {
+  name: string;
+  multi: boolean;
+  required: boolean;
+}
 export class Method {
   constructor(
     public readonly method: string,
     public readonly statusCodes: string[] = [],
-    public readonly queryParams: string[] = [],
+    public readonly queryParams: ParamType[] = [],
+    public readonly headerParams: ParamType[] = [],
     public readonly scopes: string[] = [],
     public readonly requestType?: string,
-    public readonly operationId?: string
+    public readonly operationId?: string,
+    public readonly aws?: boolean
   ) { }
 
 
   routerDefinition(spacing: string, parentNames: string, pathParameters: string[]): [string, string[]] {
     const name = this.operationId ?? `${this.method}${parentNames}Handler`;
-    //const mapType = (parameters: string[]) => `{${parameters.map(param => `${param}?: string`).join('; ')}}`;
-    const handlerType = 'Handler<Req, Response>';
-    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, (...args) => this.${name}(...args))`, [name + `: ${handlerType}`]];
+    const singleQueries = this.queryParams.filter(it => !it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string`).join('; ');
+    const multiQueries = this.queryParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string[]`).join('; ');
+    const singleHeaders = this.headerParams.filter(it => !it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string`).join('; ');
+    const multiHeaders = this.headerParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string[]`).join('; ');
+    const paths = pathParameters.map(it => `${it}: string`).join('; ');
+    const handlerType = `(request: ${this.aws ? `APIGatewayProxyEvent, parts: Parts<{${singleQueries}},{${multiQueries}},{${paths}},{${singleHeaders}},{${multiHeaders}}>` : 'Req'}) => Promise<${this.aws ? 'APIGatewayProxyResult' : 'Response'}>`;
+    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, ${this.aws ? 'mapped(': ''}this.handlers.${name}.bind(this))${this.aws ? ')': ''}`, [name + `: ${handlerType}`]];
   }
 }
 
@@ -23,21 +35,22 @@ function isOASParam(param: OASParameter | OASRef): param is OASParameter {
   return !Object.keys(param).includes("$ref");
 }
 export class Path {
-  constructor(public part: string, public paths: Path[] = [], public methods: Method[] = [], private hydra = false) {
+  constructor(public part: string, public paths: Path[] = [], public methods: Method[] = [], private hydra = false, private readonly aws = false) {
   }
 
   append(route: string[], path: OASPath, securitySchemes?: Record<string, OASSecurityScheme | OASRef>): this {
     if (route.length === 0) {
       const methods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
-      const queryParams = path?.get?.parameters
-        ?.filter(p => isOASParam(p) && p.in === "query")
-        ?.map(p => (p as OASParameter).name) ?? [];
       Object.keys(path).filter(it => methods.includes(it)).forEach(method => {
-          const definition = (path as any)[method] as OASOperation;
-          const scopes = (definition.security ?? []).flatMap(it => Object.keys(it).flatMap(key => it[key]))
+        const definition = (path as any)[method] as OASOperation;
+         const queries = definition.parameters?.filter(p => isOASParam(p) && p.in === "query")?.map(p => (p as OASParameter)) ?? [];
+         const headers = definition.parameters?.filter(p => isOASParam(p) && p.in === "header")?.map(p => (p as OASParameter)) ?? [];
+        const queryDefinitions:ParamType[] = queries.map(it => ({name: it.name, required: !!it.required, multi: it.schema?.type === 'array'}))
+        const headerDefinitions:ParamType[] = headers.map(it => ({name: it.name, required: !!it.required, multi: it.schema?.type === 'array'}))
+        const scopes = (definition.security ?? []).flatMap(it => Object.keys(it).flatMap(key => it[key]))
           const requestType = (definition.requestBody as OASRequestBody)?.content?.['application/json']?.schema?.$ref;
           const requestTypeName = requestType?.substring(requestType?.lastIndexOf('/') + 1);
-          this.methods.push(new Method(method, Object.keys(definition.responses), queryParams, [...new Set(scopes)], requestTypeName, definition.operationId))
+          this.methods.push(new Method(method, Object.keys(definition.responses), queryDefinitions, headerDefinitions, [...new Set(scopes)], requestTypeName, definition.operationId, this.aws))
         }
       );
     } else {
@@ -46,7 +59,7 @@ export class Path {
       if (existing) {
         existing.append(rest, path, securitySchemes);
       } else {
-        this.paths.push(new Path(root, [], [], this.hydra).append(rest, path, securitySchemes));
+        this.paths.push(new Path(root, [], [], this.hydra, this.aws).append(rest, path, securitySchemes));
       }
     }
     return this;
@@ -119,7 +132,7 @@ export class Path {
 
 export class PathFinder {
 
-  constructor(public apiName: string, public paths: Path[] = [], private readonly hydra = false) { }
+  constructor(public apiName: string, public paths: Path[] = [], private readonly hydra = false, private readonly aws = false) { }
 
   append(route: string, path: OASPath, securitySchemes?: Record<string, OASSecurityScheme | OASRef>): this {
     const [root, ...rest] = route.substring(1).split('/');
@@ -127,7 +140,7 @@ export class PathFinder {
     if (existing) {
       existing.append(rest, path, securitySchemes);
     } else {
-      this.paths.push(new Path(root, [], [], this.hydra).append(rest, path, securitySchemes));
+      this.paths.push(new Path(root, [], [], this.hydra, this.aws).append(rest, path, securitySchemes));
     }
     return this;
   }
@@ -141,7 +154,7 @@ export class PathFinder {
     const binds = definitions.map(it => it[0]);
     const methods = definitions.flatMap(it => it[1]);
     const idFunctions = definitions.flatMap(it => it[2]);
-    return [`router<Req, Response>([\n${binds.join(',\n')}\n    ])`, methods, idFunctions];
+    return [`router${this.aws ? '<APIGatewayProxyEvent, APIGatewayProxyResult>': '<Req, Response>'}([\n${binds.join(',\n')}\n    ])`, methods, idFunctions];
   }
 
   /**
@@ -149,29 +162,50 @@ export class PathFinder {
    */
   apiDefinition(version?: string): string {
     const [router, methods, idFunctions] = this.routerDefinition();
+    const scopes = [...new Set(this.paths.flatMap(it => it.methods.flatMap(it => it.scopes)))];
+    const defaultS = scopes.length === 0 ? 'string' : scopes.map(it => `'${it}'`).join(' | ');
+    const generics = (this.aws ? (this.hydra ? `<S extends string = ${defaultS}>` : '') : '<Req extends Request, Response' + this.hydra ? `, S extends string = ${defaultS}>` : '>');
+    const interfaceGenerics = (this.aws ? '' : '<Req extends Request, Response>');
     return `//@ts-nocheck
 import {bind, Handler, HttpMethod, HttpError, router, Request} from '@hexlabs/http-api-ts';
+${this.aws ? "import {APIGatewayProxyEvent, APIGatewayProxyResult} from 'aws-lambda';" : ""}
 ${this.hydra ? "import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';" : ""}
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const schema = require('./schema.json');
 import * as Model from "./model";
 import {Validator} from '@hexlabs/schema-api-ts';
 
-export class ${this.apiName}<Req extends Request, Response, S extends string = string> {
+${this.aws ? `export interface Parts<Q extends Record<string, string>,MQ extends Record<string, string[]>,P extends Record<string, string>,H extends Record<string, string>,MH extends Record<string, string[]>> {
+  query: Q,
+  multiQuery: MQ,
+  path: P,
+  headers: H,
+  multiHeaders: MH,
+}
+
+function mapped(fn: (request: APIGatewayProxyEvent, parts: Parts<any, any, any, any, any>) => Promise<APIGatewayProxyResult>): Handler<APIGatewayProxyEvent, APIGatewayProxyResult> {
+  return event => fn(event, {query: event.queryStringParameters ?? {}, multiQuery: event.multiValueQueryStringParameters ?? {}, path: event.pathParameters ?? {}, headers: event.headers ?? {}, multiHeaders: event.multiValueHeaders ?? {}});
+}` : ''}
+
+export interface ${this.apiName}Handlers${interfaceGenerics} {
+${methods.map(method => `    ${method};`).join('\n')}
+}
+
+export class ${this.apiName}${generics} {
 
     constructor(${this.hydra ? "protected readonly host: string, protected readonly basePath: string, " : ""}public readonly version = '${version ?? '1.0.0'}'){}
     
-    public readonly handle = ${router};
+    public readonly handlers: Partial<${this.apiName}Handlers${this.aws ? '' : '<Req, Response>'}> = {};
     
-${methods.map(method => `    ${method} = async () => ({ statusCode: 501, body: 'Not Implemented' });`).join('\n')}
+    public readonly handle = ${router};
 
 ${[...new Set(idFunctions)].join('\n')}
 }`;
   }
 
-  static from(openapi: OAS, hydra: boolean): PathFinder {
+  static from(openapi: OAS, hydra: boolean, aws: boolean): PathFinder {
     return Object.keys(openapi.paths).reduce((pathFinder, path) => {
       return pathFinder.append(path, openapi.paths[path] as OASPath, openapi.components?.securitySchemes);
-    }, new PathFinder(openapi.info.title.replace(/\W+/g, ''), [], hydra));
+    }, new PathFinder(openapi.info.title.replace(/\W+/g, ''), [], hydra, aws));
   }
 }

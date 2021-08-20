@@ -194,6 +194,7 @@ export type Caller = {
     ): Promise<{ statusCode: number; body: string; headers: Record<string, string> }>;
   }
 
+  
 export class ${name} {
   constructor(
     private readonly caller: Caller,${servers ? `\n    private readonly serverLookup?: {${serverLookupTyped.join('; ')}},\n    public readonly servers: Array<{url: string; variables: Record<string, string>}> = [${servers.join(', ')}]` : ''}
