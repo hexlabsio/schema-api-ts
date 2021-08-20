@@ -190,12 +190,12 @@ function mapped(headers: string[], multiHeaders: string[], fn: (request: APIGate
     const eventHeaders = Object.keys(event.headers ?? {});
     const selectedHeaders = headers.reduce((newHeaders, name) => {
       const match = eventHeaders.find(h => name.toLowerCase() === h.toLowerCase());
-      return {...newHeaders, [name]: match ? eventHeaders[match] : undefined};
+      return {...newHeaders, [name]: match ? (event.headers ?? {})[match] : undefined};
     }, {} as any);
     const eventMultiHeaders = Object.keys(event.multiValueHeaders ?? {});
     const selectedMultiHeaders = multiHeaders.reduce((newHeaders, name) => {
       const match = eventMultiHeaders.find(h => name.toLowerCase() === h.toLowerCase());
-      return {...newHeaders, [name]: match ? eventMultiHeaders[match] : undefined};
+      return {...newHeaders, [name]: match ? (event.multiValueHeaders ?? {})[match] : undefined};
     }, {} as any);
     return fn(event, {query: event.queryStringParameters ?? {}, multiQuery: event.multiValueQueryStringParameters ?? {}, path: event.pathParameters ?? {}, headers: selectedHeaders, multiHeaders: selectedMultiHeaders});
   }
