@@ -31,7 +31,8 @@ const hydraSpec: {[key: string]: JSONSchema} = {
         type: 'object',
         properties: {
         totalItems: {type: 'number'},
-        member: { type: 'array', items: { $ref: '#/components/schemas/HydraResource' }}
+        member: { type: 'array', items: { $ref: '#/components/schemas/HydraResource' }},
+        next: {type: 'string'}
         }
       }
     ]

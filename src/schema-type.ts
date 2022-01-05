@@ -141,7 +141,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
     const other: JSONSchema = this.schemaParent.components.schemas[reference];
     if(other.type === 'object') {
       if(!Object.keys(this.schemaParent.components.schemas).includes('HydraOperation')) throw new Error('HydraOperation must first be defined in the schema')
-      return this.object({'@id': this.string(), '@operation': this.reference('HydraOperation'), member: this.array(other)}) as any
+      return this.object({'@id': this.string(), '@operation': this.reference('HydraOperation'), member: this.array(other)}, {next: this.string()}) as any
     }
     throw new Error('Must be an object to map to hydra resource')
   }
