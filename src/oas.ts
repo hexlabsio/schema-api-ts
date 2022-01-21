@@ -23,16 +23,23 @@ export interface OASComponents {
   callbacks?: { [key: string]: OASPath | OASRef };
 }
 
-export interface OASSecurityScheme {
-  type: string;
+export type OASSecurityScheme = {
   description?: string;
-  name?: string;
-  in?: "query" | "header" | "cookie",
-  scheme?: string;
-  bearerFormat?: string;
+} & ({
+  type: "oauth2";
   flows: OASOAuthFlows;
-  openIdConnectUrl?: string;
+} | {
+  type: "openIdConnect";
+  openIdConnectUrl: string;
+} | {
+  type: 'http';
+  scheme: string;
+} | {
+  type: 'apiKey';
+  name: string;
+  in: "query" | "header" | "cookie";
 }
+)
 
 export interface OASOAuthFlows {
   implicit?: OASOAuthFlow;
@@ -43,7 +50,7 @@ export interface OASOAuthFlows {
 
 export interface OASOAuthFlow {
   authorizationUrl: string;
-  tokenUrl?: string;
+  tokenUrl: string;
   refreshUrl?: string;
   scopes: { [scope: string]: string }
 }
@@ -142,7 +149,7 @@ export interface OASExternalDocs {
   ur: string;
 }
 
-export interface OASParameter {
+export type OASParameter = {
   name: string;
   in: 'query' | 'header' | 'path' | 'cookie';
   description?: string;
@@ -152,11 +159,10 @@ export interface OASParameter {
   style?: string;
   explode?: boolean;
   allowReserved?: boolean;
-  schema?: JSONSchema;
   example?: any;
   examples?: { [key: string]: any };
-  content?: { [key: string]: OASMedia };
-}
+  schema?: JSONSchema
+} & ({schema: JSONSchema} | {content: { [key: string]: OASMedia }})
 
 export interface OASMedia {
   schema?: JSONSchema;

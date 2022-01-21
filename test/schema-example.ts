@@ -1,4 +1,4 @@
-import {OASServer} from "../dist";
+import {OASServer} from "../src";
 import {OpenApiSpecificationBuilder, SchemaBuilder} from "../src";
 
 const builder = SchemaBuilder.create();
@@ -31,15 +31,15 @@ const schemas = builder.add('Chicken', s => s.object({
 
 export default OpenApiSpecificationBuilder
 .create(schemas, { title: 'Chicken Store API', version: '1.0.0'})
-.add('servers', o => servers)
-.addComponent('securitySchemes', () => ({ OAuth: { type: 'oauth', flows: { authorizationCode: { authorizationUrl: '', scopes: { read: 'Read', write: 'Write', admin: 'Admin' }}} }}))
+.add('servers', () => servers)
+.addComponent('securitySchemes', o => ({ Auth: o.openIdConnectScheme('.well-known/xyz')}))
 .add('paths', o => ({
   '/chicken': {
     get: {
-      security: [{OAuth: ['read', 'write', 'admin']}],
+      security: [{Auth: ['read', 'write', 'admin']}],
       operationId: 'getChickens',
       responses: {
-        200: {description: 'The Flock', content: o.jsonContent('ChickenCollection')},
+        200: o.response('The Flock', o.jsonContent('ChickenCollection')),
       }
     },
     post: {
@@ -60,14 +60,21 @@ export default OpenApiSpecificationBuilder
   '/chicken/{chickenId}': {
     get: {
       operationId: 'getChicken',
-      parameters: [{required: true, name: 'chickenId', in: 'path'},{required: true, name: 'someQuery', in: 'query'}, {required: false, name: 'someQuery2', in: 'query'}],
+      parameters: [
+          o.path('chickenId'),
+          o.query('someQuery'),
+          o.query('someOtherQuery', false, true)
+      ],
       responses: {
         200: {description: 'The Chicken', content: o.jsonContent('Chicken')},
       }
     },
     put: {
       operationId: 'updateChicken',
-      parameters: [{required: true, name: 'chickenId', in: 'path'}, {required: true, name: 'someQuery', in: 'query', schema: builder.array(builder.string())}],
+      parameters: [
+        o.path('chickenId'),
+        o.query('someQuery', true, true)
+      ],
       requestBody: {
         description: 'A Chicken',
         content: o.jsonContent('ChickenCreateRequest')
@@ -78,7 +85,10 @@ export default OpenApiSpecificationBuilder
     },
     delete: {
       operationId: 'deleteChicken',
-      parameters: [{required: true, name: 'chickenId', in: 'path'}, {required: true, name: 'X-Encryption-Key', in: 'header'}],
+      parameters: [
+          o.path('chickenId'),
+          o.header('X-Encryption-Key')
+      ],
       responses: {
         200: {description: 'Success', content: o.textContent('Deleted')},
       }

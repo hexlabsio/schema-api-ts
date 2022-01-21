@@ -32,6 +32,7 @@ async function generateFromSchema(schemaLocation: string, command: any) {
   const dir = 'generated/' + schema.info.title.toLowerCase().replace(/ /g, '-') + '/';
   if(!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
   fs.writeFileSync(dir + 'schema.json', JSON.stringify({ components: { schemas: schema.components?.schemas ?? {} } }, null, 2));
+  fs.writeFileSync(dir + 'oas.json', JSON.stringify(schema, null, 2));
   fs.writeFileSync(dir + 'api.ts', apiDefinition);
   const pathInfo = pathFinder.pathInfo();
   fs.writeFileSync(dir + 'paths.json', JSON.stringify(pathInfo, null, 2));

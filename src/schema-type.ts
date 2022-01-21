@@ -1,5 +1,5 @@
 import {JSONSchema} from "json-schema-to-typescript";
-import {OASEncoding, OASInfo, OASMedia} from "./oas";
+import {OASEncoding, OASInfo, OASMedia, OASOAuthFlows, OASParameter, OASResponse, OASSecurityScheme} from "./oas";
 import {OAS, OASComponents} from "./oas";
 
 type UnionToTuple<T> = (
@@ -176,6 +176,10 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, 
   textContent(example?: string, examples?: Record<string, string>, encoding?: { [key: string]: OASEncoding }): { 'application/text': OASMedia } {
     return {'application/text': {schema: SchemaBuilder.create().string(), example, examples, encoding}};
   }
+
+  response(description: string, content: OASResponse['content']): OASResponse {
+    return {description, content}
+  }
   
   responseReference<K extends keyof S['components']['responses']>(key: K): { '$ref': K extends string ? `#/components/responses/${K}` : string } {
     return this.componentReference('responses', key);
@@ -188,6 +192,43 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, 
     encoding?: { [key: string]: OASEncoding }
   ): OASMedia {
     return {schema: this.reference(key), example, examples, encoding}
+  }
+
+  oAuth2Scheme(flows: OASOAuthFlows, description = ''): OASSecurityScheme {
+    return {
+      type: 'oauth2',
+      flows,
+      description
+    }
+  }
+
+  openIdConnectScheme(openIdConnectUrl: string, description = ''): OASSecurityScheme {
+    return {
+      type: 'openIdConnect',
+      openIdConnectUrl,
+      description
+    }
+  }
+
+  query(name: string, required = true, multiple = false): OASParameter {
+    return this.parameter(name, "query", required, multiple ? {type: "array", items: {type: "string"}} : {type: "string"})
+  }
+
+  header(name: string, required = true): OASParameter {
+    return this.parameter(name, "header", required)
+  }
+
+  path(name: string): OASParameter {
+    return this.parameter(name, "path", true)
+  }
+
+  parameter(name: string, location: OASParameter['in'], required = true, schema: JSONSchema = {type: "string"}): OASParameter {
+    return {
+      name,
+      in: location,
+      required,
+      schema
+    }
   }
   
   reference<K extends keyof S['components']['schemas']>(key: K): { '$ref': K extends string ? `#/components/schemas/${K}` : string } {
