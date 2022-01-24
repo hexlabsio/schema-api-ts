@@ -82,6 +82,7 @@
     "@hexlabs/lambda-api-ts": "^0.1.12"
   },
   "devDependencies": {
+    "@hexlabs/http-api-ts": "^1.1.33",
     "@types/aws-lambda": "^8.10.40",
     "@types/jest": "^24.9.1",
     "@types/node": "^12.12.14",
