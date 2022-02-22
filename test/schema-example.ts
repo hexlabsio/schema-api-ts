@@ -27,7 +27,11 @@ const schemas = builder.add('Chicken', s => s.object({
 .add('ChickenCreateRequest', s => s.object({
   type: s.string(),
   name: s.string()
-})).build();
+}))
+    .add('ChickenCreateRequest2', s => s.object({}, {
+      type: s.string(),
+      name: s.string()
+    })).build();
 
 export default OpenApiSpecificationBuilder
 .create(schemas, { title: 'Chicken Store API', version: '1.0.0'})

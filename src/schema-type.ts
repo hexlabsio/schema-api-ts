@@ -1,5 +1,13 @@
 import {JSONSchema} from "json-schema-to-typescript";
-import {OASEncoding, OASInfo, OASMedia, OASOAuthFlows, OASParameter, OASResponse, OASSecurityScheme} from "./oas";
+import {
+  OASEncoding,
+  OASInfo,
+  OASMedia,
+  OASOAuthFlows,
+  OASParameter,
+  OASResponse,
+  OASSecurityScheme
+} from "./oas";
 import {OAS, OASComponents} from "./oas";
 
 type UnionToTuple<T> = (
@@ -58,11 +66,12 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   
   object<R extends Record<string, JSONSchema> | undefined = undefined,O = undefined, A extends boolean | JSONSchema | undefined = false, P extends JSONSchema | undefined = undefined>
   (required: R = undefined as unknown as R, optional: O = undefined as unknown as O, additionalProperties: A = false as unknown as A, title = undefined, parts: P = undefined as unknown as P): ObjectSchema<A, R, O> {
+    const requireds = Object.keys(required ?? {});
     return {
       type: 'object',
       title,
       additionalProperties,
-      required: Object.keys(required ?? {}),
+      ...(requireds.length > 0 ? {required: requireds}: {}) ,
       properties: {
         ...required,
         ...optional
