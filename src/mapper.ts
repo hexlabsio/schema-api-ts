@@ -32,8 +32,8 @@ export class Method {
 
   routerDefinition(spacing: string, parentNames: string, pathParameters: string[]): [string, string[]] {
     const name = this.operationId ?? `${this.method}${parentNames}Handler`;
-    const singleQueries = this.queryParams.filter(it => !it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string`).join('; ');
-    const multiQueries = this.queryParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string[]`).join('; ');
+    const singleQueries = this.queryParams.filter(it => !it.multi).map(param => `['${param.name}']${param.required ? '': '?'}: string`).join('; ');
+    const multiQueries = this.queryParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '': '?'}: string[]`).join('; ');
     const singleHeaders = this.headerParams.filter(it => !it.multi).map(param => `['${param.name}']?: string`).join('; ');
     const multiHeaders = this.headerParams.filter(it => it.multi).map(param => `['${param.name}']?: string[]`).join('; ');
     const singleHeaderNames = '[' + this.headerParams.filter(it => !it.multi).map(it => `'${it.name}'`).join(', ') + ']';
