@@ -1,5 +1,5 @@
 {
-  "name": "@hexlabs/schema-api-ts",
+  "name": "@firstam/schema-api-ts",
   "description": "Generate AWS Stacks, APIs and Types from OpenAPI",
   "license": "Apache-2.0",
   "version": "1.0.0",

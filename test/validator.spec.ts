@@ -114,6 +114,18 @@ describe('Validation', () => {
       expect(Validator.validate('Y', schema)).toEqual([]);
       expect(Validator.validate('T', schema).length).toEqual(1);
     });
+
+    it('should validate minLength', () => {
+      const schema: JSONSchema = {type: 'string', minLength: 1};
+      expect(Validator.validate('', schema)).toEqual([{value: '', schema: {type: 'string', minLength: 1}, location: '#', message: 'Expected value to have length greater than or equal to 1'}]);
+      expect(Validator.validate('Y', schema)).toEqual([]);
+    });
+
+    it('should validate minLength in object', () => {
+      const schema: JSONSchema = s.object({ abc: {type: 'string', minLength: 1} });
+      expect(Validator.validate({ abc: '' }, schema)).toEqual([{value: '', schema: {type: 'string', minLength: 1}, location: '#/abc', message: 'Expected value to have length greater than or equal to 1'}]);
+      expect(Validator.validate({ abc: 'Y' }, schema)).toEqual([]);
+    });
   });
   
 });

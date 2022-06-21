@@ -324,7 +324,7 @@ class ObjectValidator {
     if(!schema.current.properties || Object.keys(schema.current.properties).length === 0) return [];
     return Object.keys(schema.current.properties).flatMap(property => {
       const subElement = value[property];
-      if(!subElement) return [];
+      if(subElement === null || subElement === undefined) return [];
       return Validator.validateUnknown(subElement, `${location}/${property}`, {schema: schema.schema, current: schema.current.properties![property]})
     });
   }
