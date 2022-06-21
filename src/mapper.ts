@@ -1,5 +1,16 @@
-import { PathInfo } from "@hexlabs/kloudformation-ts/dist/kloudformation/modules/api";
 import {OAS, OASOperation, OASParameter, OASPath, OASRef, OASRequestBody, OASSecurityScheme} from "./oas";
+
+export interface PathInfo {
+  paths?: {
+    [key: string]: PathInfo;
+  };
+  methods?: string[];
+  security?: {
+    [method: string]: {
+      scopes: string[]
+    }
+  }
+}
 
 interface ParamType {
   name: string;
@@ -21,8 +32,8 @@ export class Method {
 
   routerDefinition(spacing: string, parentNames: string, pathParameters: string[]): [string, string[]] {
     const name = this.operationId ?? `${this.method}${parentNames}Handler`;
-    const singleQueries = this.queryParams.filter(it => !it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string`).join('; ');
-    const multiQueries = this.queryParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '?': ''}: string[]`).join('; ');
+    const singleQueries = this.queryParams.filter(it => !it.multi).map(param => `['${param.name}']${param.required ? '': '?'}: string`).join('; ');
+    const multiQueries = this.queryParams.filter(it => it.multi).map(param => `['${param.name}']${param.required ? '': '?'}: string[]`).join('; ');
     const singleHeaders = this.headerParams.filter(it => !it.multi).map(param => `['${param.name}']?: string`).join('; ');
     const multiHeaders = this.headerParams.filter(it => it.multi).map(param => `['${param.name}']?: string[]`).join('; ');
     const singleHeaderNames = '[' + this.headerParams.filter(it => !it.multi).map(it => `'${it.name}'`).join(', ') + ']';
@@ -70,6 +81,7 @@ export class Path {
   pathInfo(): { [key: string]: PathInfo } {
     return {
       ['/' + this.part]: {
+        security: this.methods.reduce((prev, method) => ({...prev, [method.method.toUpperCase()]: { scopes: method.scopes }}), {}),
         methods: this.methods.map(method => method.method.toUpperCase()),
         paths: this.paths.reduce((paths, path) => ({ ...paths, ...path.pathInfo() }), {})
       }
