@@ -72,6 +72,7 @@ describe('Validation', () => {
       const schema = s.object({a: s.string(), b: s.number()}, undefined, false) as JSONSchema;
       expect(Validator.validate({a: 'b', b: 5}, schema)).toEqual([]);
       expect(Validator.validate({a: 'b'}, schema)).toEqual([{value: {a: 'b'}, location: '#', schema, message: 'Expected the following keys that were not present: [b]'}]);
+      expect(Validator.validate({a: 'b', b : null}, schema)).toEqual([{value: null, location: '#/b', schema: { type: 'number' }, message: 'Expected value to be a number'}]);
     });
   
     it('should validate child property', () => {
