@@ -13,8 +13,8 @@
     "strictFunctionTypes": true,
     "allowJs": true,
     "moduleResolution": "node",
-    "module": "commonjs",
-    "target": "ES2019",
+    "module": "ES2020",
+    "target": "ES2020",
     "pretty": true,
     "inlineSourceMap": false,
     "inlineSources": false,
@@ -22,5 +22,9 @@
   },
   "include": [
     "src/**/*",
-  ]
+  ],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  }
 }
