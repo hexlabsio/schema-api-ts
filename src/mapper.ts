@@ -1,4 +1,13 @@
-import {OAS, OASOperation, OASParameter, OASPath, OASRef, OASRequestBody, OASSecurityScheme} from "./oas";
+import {
+  OAS,
+  OASOperation,
+  OASParameter,
+  OASPath,
+  OASRef,
+  OASRequestBody,
+  OASResponse,
+  OASSecurityScheme
+} from "./oas";
 
 export interface PathInfo {
   paths?: {
@@ -20,7 +29,7 @@ interface ParamType {
 export class Method {
   constructor(
     public readonly method: string,
-    public readonly statusCodes: string[] = [],
+    public readonly responses: Record<string, OASResponse> = {},
     public readonly queryParams: ParamType[] = [],
     public readonly headerParams: ParamType[] = [],
     public readonly scopes: string[] = [],
@@ -39,8 +48,40 @@ export class Method {
     const singleHeaderNames = '[' + this.headerParams.filter(it => !it.multi).map(it => `'${it.name}'`).join(', ') + ']';
     const multiHeaderNames = '[' + this.headerParams.filter(it => it.multi).map(it => `'${it.name}'`).join(', ') + ']';
     const paths = pathParameters.map(it => `${it}: string`).join('; ');
-    const handlerType = `(request: ${this.aws ? `APIGatewayProxyEvent, parts: Parts<{${singleQueries}},{${multiQueries}},{${paths}},{${singleHeaders}},{${multiHeaders}}>` : 'Req'}) => Promise<${this.aws ? 'APIGatewayProxyResult' : 'Response'}>`;
-    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, ${this.aws ? `mapped(${singleHeaderNames}, ${multiHeaderNames},`: ''}this.handlers.${name}?.bind(this) ?? (async () => ({statusCode: 501, body: 'Not Implemented'})))${this.aws ? ')': ''}`, [name + `: ${handlerType}`]];
+    const returner = Object.keys(this.responses).map(statusCode => {
+      const response = this.responses[statusCode];
+      const contentTypes = Object.keys(response.content ?? {});
+      const responses = contentTypes.map(contentType => {
+        const media = response.content![contentType];
+        if(contentType === 'application/json') {
+          const responseType = media.schema?.$ref;
+          const responseTypeName = responseType?.substring(responseType?.lastIndexOf('/') + 1);
+          return `json(body: Model.${responseTypeName}): APIGatewayProxyResult`;
+        } else if (contentType === 'application/text') {
+          return `text(body: string): APIGatewayProxyResult`;
+        }
+        return `['${contentType}'](body: string): APIGatewayProxyResult`;
+      });
+      return `[${statusCode}]: { ${responses.join(', ')} }`;
+    }).join(', ');
+    const returnerImplementation = Object.keys(this.responses).map(statusCode => {
+      const response = this.responses[statusCode];
+      const contentTypes = Object.keys(response.content ?? {});
+      const responses = contentTypes.map(contentType => {
+        const media = response.content![contentType];
+        if(contentType === 'application/json') {
+          const responseType = media.schema?.$ref;
+          const responseTypeName = responseType?.substring(responseType?.lastIndexOf('/') + 1);
+          return `json(body: Model.${responseTypeName}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body: JSON.stringify(body), headers: { ['Content-Type']: '${contentType}' } } }`;
+        } else if (contentType === 'application/text') {
+          return `text(body: string): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ['Content-Type']: '${contentType}' } } }`;
+        }
+        return `['${contentType}'](body: string): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ['Content-Type']: '${contentType}' } } }`;
+      });
+      return `[${statusCode}]: { ${responses.join(', ')} }`;
+    }).join(', ');
+    const handlerType = `(request: ${this.aws ? `APIGatewayProxyEvent, parts: Parts<{${singleQueries}},{${multiQueries}},{${paths}},{${singleHeaders}},{${multiHeaders}}>, respondWith: { ${returner} }` : 'Req'}) => Promise<${this.aws ? 'APIGatewayProxyResult' : 'Response'}>`;
+    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, ${this.aws ? `mapped(${singleHeaderNames}, ${multiHeaderNames},`: ''}(...params: any[]) => this.handlers.${name}?.bind(this)?.(...params, { ${returnerImplementation} }) ?? (async () => ({statusCode: 501, body: 'Not Implemented'})))${this.aws ? ')': ''}`, [name + `: ${handlerType}`]];
   }
 }
 
@@ -63,7 +104,7 @@ export class Path {
         const scopes = (definition.security ?? []).flatMap(it => Object.keys(it).flatMap(key => it[key]))
           const requestType = (definition.requestBody as OASRequestBody)?.content?.['application/json']?.schema?.$ref;
           const requestTypeName = requestType?.substring(requestType?.lastIndexOf('/') + 1);
-          this.methods.push(new Method(method, Object.keys(definition.responses), queryDefinitions, headerDefinitions, [...new Set(scopes)], requestTypeName, definition.operationId, this.aws))
+          this.methods.push(new Method(method, definition.responses as any, queryDefinitions, headerDefinitions, [...new Set(scopes)], requestTypeName, definition.operationId, this.aws))
         }
       );
     } else {
@@ -115,7 +156,7 @@ export class Path {
       return ${'`/'}${ids.join('/')}${'`'};
     }`;
     const operationsFunction = `    get${nextParentNames}Operations(): Array<{method: string; statusCodes: number[]; scopes: S[]}> {
-      return [${this.methods.length === 0 ? '' : '\n'}${this.methods.map(method => `        { method: '${method.method.toUpperCase()}', statusCodes: [${method.statusCodes.join(',')}], scopes: [${method.scopes.map(scope => `'${scope}'`).join(',')}] as S[] }`).join(',\n')}${this.methods.length === 0 ? '' : '\n      '}];
+      return [${this.methods.length === 0 ? '' : '\n'}${this.methods.map(method => `        { method: '${method.method.toUpperCase()}', statusCodes: [${Object.keys(method.responses).join(',')}], scopes: [${method.scopes.map(scope => `'${scope}'`).join(',')}] as S[] }`).join(',\n')}${this.methods.length === 0 ? '' : '\n      '}];
     }`;
     const resourceDefinitionFunction = `    get${nextParentNames}ResourceDefinition(${uriParams.length > 0 ? [...uriParams, 'idOnly = false'].join(', ') : ''}): ResourceApiDefinition<S>{
       return {
