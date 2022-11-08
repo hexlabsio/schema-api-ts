@@ -84,7 +84,8 @@ export default OpenApiSpecificationBuilder
         content: o.jsonContent('ChickenCreateRequest')
       },
       responses: {
-        200: {description: 'The Chicken', content: o.jsonContent('Chicken')},
+        200: o.response('The Chicken', {...o.jsonContent('Chicken'), ...o.textContent()}, ['Location']),
+        404: o.response('Not Found', o.textContent()),
       }
     },
     delete: {

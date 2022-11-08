@@ -53,14 +53,16 @@ export class Method {
       const contentTypes = Object.keys(response.content ?? {});
       const responses = contentTypes.map(contentType => {
         const media = response.content![contentType];
+        const headers = Object.keys(response.headers ?? {});
+        const headerParam = headers.map(it => `['${it}']?: string`).join(', ');
         if(contentType === 'application/json') {
           const responseType = media.schema?.$ref;
           const responseTypeName = responseType?.substring(responseType?.lastIndexOf('/') + 1);
-          return `json(body: Model.${responseTypeName}): APIGatewayProxyResult`;
+          return `json(body: Model.${responseTypeName}, headers?: {${headerParam}}): APIGatewayProxyResult`;
         } else if (contentType === 'application/text') {
-          return `text(body: string): APIGatewayProxyResult`;
+          return `text(body: string, headers?: {${headerParam}}): APIGatewayProxyResult`;
         }
-        return `['${contentType}'](body: string): APIGatewayProxyResult`;
+        return `['${contentType}'](body: string, headers?: {${headerParam}}): APIGatewayProxyResult`;
       });
       return `[${statusCode}]: { ${responses.join(', ')} }`;
     }).join(', ');
@@ -69,14 +71,16 @@ export class Method {
       const contentTypes = Object.keys(response.content ?? {});
       const responses = contentTypes.map(contentType => {
         const media = response.content![contentType];
+        const headers = Object.keys(response.headers ?? {});
+        const headerParam = headers.map(it => `['${it}']?: string`).join(', ');
         if(contentType === 'application/json') {
           const responseType = media.schema?.$ref;
           const responseTypeName = responseType?.substring(responseType?.lastIndexOf('/') + 1);
-          return `json(body: Model.${responseTypeName}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body: JSON.stringify(body), headers: { ['Content-Type']: '${contentType}' } } }`;
+          return `json(body: Model.${responseTypeName}, headers?: {${headerParam}}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body: JSON.stringify(body), headers: { ...(headers ?? {}), ['Content-Type']: '${contentType}' } } }`;
         } else if (contentType === 'application/text') {
-          return `text(body: string): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ['Content-Type']: '${contentType}' } } }`;
+          return `text(body: string, headers?: {${headerParam}}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ...(headers ?? {}), ['Content-Type']: '${contentType}' } } }`;
         }
-        return `['${contentType}'](body: string): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ['Content-Type']: '${contentType}' } } }`;
+        return `['${contentType}'](body: string, headers?: {${headerParam}}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ...(headers ?? {}), ['Content-Type']: '${contentType}' } } }`;
       });
       return `[${statusCode}]: { ${responses.join(', ')} }`;
     }).join(', ');

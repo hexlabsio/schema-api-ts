@@ -186,8 +186,8 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, 
     return {'application/text': {schema: SchemaBuilder.create().string(), example, examples, encoding}};
   }
 
-  response(description: string, content: OASResponse['content']): OASResponse {
-    return {description, content}
+  response(description: string, content: OASResponse['content'], headers: string[] = []): OASResponse {
+    return {description, content, headers: headers.reduce((prev, name) => ({ ...prev, [name]: {required: true, schema: { type: 'string' }} }), {})}
   }
 
   responseReference<K extends keyof S['components']['responses']>(key: K): { '$ref': K extends string ? `#/components/responses/${K}` : string } {
