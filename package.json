@@ -7,6 +7,10 @@
   "bin": {
     "schema-api-ts": "dist/cli.mjs"
   },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./cli": "./dist/cli.mjs"
+  },
   "main": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
@@ -84,6 +88,9 @@
   },
   "devDependencies": {
     "@hexlabs/http-api-ts": "^1.1.33",
+    "@rollup/plugin-commonjs": "^25.0.5",
+    "@rollup/plugin-json": "^6.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/aws-lambda": "^8.10.40",
     "@types/jest": "^24.9.1",
