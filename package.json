@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "version": "1.0.0",
   "bin": {
-    "schema-api-ts": "dist/cli.js"
+    "schema-api-ts": "dist/cli.mjs"
   },
   "main": "dist/index.mjs",
   "types": "dist/index.d.ts",
