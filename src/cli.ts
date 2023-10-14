@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import {OAS} from "./oas";
 import chalk from 'chalk';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-require('ts-node').register({typeCheck: false});
+(await import('ts-node')).register({typeCheck: false});
 import { Command } from 'commander';
 import {generateSdkFrom} from "./sdk-mapper";
 import {generateMockFrom} from "./mock-mapper";
@@ -24,7 +24,7 @@ export async function types(oas: OAS): Promise<string> {
 async function generateFromSchema(schemaLocation: string, command: any) {
   const {hydra, aws} = command;
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const schema: OAS = schemaLocation.endsWith('.ts') ? require(schemaLocation).default : require(schemaLocation);
+  const schema: OAS = schemaLocation.endsWith('.ts') ? (await import(schemaLocation)).default : require(schemaLocation);
   const pathFinder = PathFinder.from(schema, hydra, aws);
   const args = process.argv;
   const version = args.find(it => it.startsWith('v='))?.substring(2);

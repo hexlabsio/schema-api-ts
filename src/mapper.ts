@@ -230,7 +230,7 @@ import {bind, Handler, HttpMethod, HttpError, router, Request} from '@hexlabs/ht
 ${this.aws ? "import {APIGatewayProxyEvent, APIGatewayProxyResult} from 'aws-lambda';" : ""}
 ${this.hydra ? "import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';" : ""}
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const schema = require('./schema.json');
+import schema from './schema.json';
 import * as Model from "./model";
 import {Validator} from '@hexlabs/schema-api-ts';
 

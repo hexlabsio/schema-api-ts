@@ -53,7 +53,7 @@ type FilteredKeys<T> = { [P in keyof T]: T[P] extends never ? never : P }[keyof 
 type Stripped<T> = { [Q in FilteredKeys<T>]: T[Q] };
 
 type Combine<A,B> = A extends undefined ? ( B extends undefined ? never : B) : ( B extends undefined ? A : A & B)
-type ObjectSchema<A extends boolean | JSONSchema | undefined = false, R extends Record<string, JSONSchema>| undefined = undefined, O extends JSONSchema | undefined= undefined> = Stripped<{type: 'object', title: string, additionalProperties: A extends undefined ? never : A, required: R extends undefined ? never: UnionToTuple<keyof R>, properties: Combine<R,O> }>;
+type ObjectSchema<A extends boolean | JSONSchema | undefined = false, R extends Record<string, JSONSchema>| undefined = undefined, O extends Record<string, JSONSchema> | undefined= undefined> = Stripped<{type: 'object', title: string, additionalProperties: A extends undefined ? never : A, required: R extends undefined ? never: UnionToTuple<keyof R>, properties: Combine<R,O> }>;
 type ArraySchema<R, A extends boolean | JSONSchema | undefined = undefined> = Stripped<{type: 'array', title: string, additionalItems: A extends undefined ? never : A, items: R }>;
 
 export class SchemaBuilder<T extends {components:{schemas: any}}> {
@@ -64,7 +64,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
     return this.schemaParent
   }
 
-  object<R extends Record<string, JSONSchema> | undefined = undefined,O = undefined, A extends boolean | JSONSchema | undefined = false, P extends JSONSchema | undefined = undefined>
+  object<R extends Record<string, JSONSchema> | undefined = undefined, O extends Record<string, JSONSchema> | undefined  = undefined, A extends boolean | JSONSchema | undefined = false, P extends JSONSchema | undefined = undefined>
   (required: R = undefined as unknown as R, optional: O = undefined as unknown as O, additionalProperties: A = false as unknown as A, title = undefined, parts: P = undefined as unknown as P): ObjectSchema<A, R, O> {
     const requireds = Object.keys(required ?? {});
     return {
@@ -122,7 +122,7 @@ export class SchemaBuilder<T extends {components:{schemas: any}}> {
   null(): {type: 'null'} { return {type: 'null'} }
 
   reference<K extends keyof T['components']['schemas']>(key: K): { '$ref': K extends string ? `#/components/schemas/${K}` : string } {
-    return { '$ref': `#/components/schemas/${key}` } as any;
+    return { '$ref': `#/components/schemas/${key as string}` } as any;
   }
 
   hydraOperation(): ObjectSchema<undefined, {statusCodes: ArraySchema<{type: 'string'}>, method: {type: 'string'}}, {expects: {type: 'string'}, returns: {type: 'string'}}> {
@@ -270,7 +270,7 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, 
   }
 
   componentReference<K extends keyof S['components'], T extends keyof S['components'][K]>(componentKey: K, key: T): { '$ref': K extends string ? T extends string ? `#/components/${K}/${T}` : string : string } {
-    return {'$ref': `#/components/${componentKey}/${key}`} as any;
+    return {'$ref': `#/components/${componentKey as string}/${key as string}`} as any;
   }
 
   addComponent<K extends keyof OASComponents, B extends (builder: this) => OASComponents[K]>(location: K, itemBuilder: B): B extends (builder: any) => infer R ? OpenApiSpecificationBuilder<S & { components: { [k in K]: R } }> : never {
