@@ -8,7 +8,7 @@ import {
   OASResponse,
   OASSecurityScheme
 } from "./oas";
-import {OAS, OASComponents} from "./oas";
+import {OAS, OASComponents} from "./oas.js";
 
 type UnionToTuple<T> = (
   (

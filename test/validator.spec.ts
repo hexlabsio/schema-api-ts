@@ -1,6 +1,5 @@
 import {JSONSchema} from "json-schema-to-typescript";
-import {SchemaBuilder} from "../src";
-import {Validator} from "../src/validator";
+import {SchemaBuilder, Validator} from "../src";
 
 const s = SchemaBuilder.create();
 describe('Validation', () => {

@@ -1,5 +1,5 @@
 import {JSONSchema} from "json-schema-to-typescript";
-import {traversePath} from "./sdk-mapper";
+import {traversePath} from "./sdk-mapper.js";
 
 
 interface Invalid {

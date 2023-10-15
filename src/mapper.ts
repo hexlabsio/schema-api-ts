@@ -7,7 +7,7 @@ import {
   OASRequestBody,
   OASResponse,
   OASSecurityScheme
-} from "./oas";
+} from "./oas.js";
 
 export interface PathInfo {
   paths?: {
@@ -231,7 +231,7 @@ ${this.aws ? "import {APIGatewayProxyEvent, APIGatewayProxyResult} from 'aws-lam
 ${this.hydra ? "import {ResourceApiDefinition, CollectionApiDefinition, ScopedOperation} from '@hexlabs/lambda-api-ts';" : ""}
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import schema from './schema.json';
-import * as Model from "./model";
+import * as Model from "./model.js";
 import {Validator} from '@hexlabs/schema-api-ts';
 
 ${this.aws ? `export interface Parts<Q extends Record<string, string>,MQ extends Record<string, string[]>,P extends Record<string, string>,H extends Record<string, string>,MH extends Record<string, string[]>> {

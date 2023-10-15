@@ -1,5 +1,5 @@
-import {OAS, OASOperation, OASRef, OASResponse} from "./oas";
-import {methodOperations, pathsFrom, traversePath} from "./sdk-mapper";
+import {OAS, OASOperation, OASRef, OASResponse} from "./oas.js";
+import {methodOperations, pathsFrom, traversePath} from "./sdk-mapper.js";
 
 interface Method {
   method: string

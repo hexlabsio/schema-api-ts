@@ -1,6 +1,6 @@
 import { JSONSchema } from "json-schema-to-typescript";
-import { OASParameter, OASPath, OASRef, OASRequestBody, OASResponse } from "./oas";
-import { OAS, OASOperation } from "./oas";
+import { OASParameter, OASPath, OASRef, OASRequestBody, OASResponse } from "./oas.js";
+import { OAS, OASOperation } from "./oas.js";
 
 function capitilize(name: string): string {
   return name.substring(0, 1).toUpperCase() + name.substring(1);

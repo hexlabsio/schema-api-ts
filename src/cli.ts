@@ -1,14 +1,12 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 import {compile, JSONSchema} from "json-schema-to-typescript";
-import {PathFinder} from "./mapper";
+import {PathFinder} from "./mapper.js";
 import * as fs from 'fs';
-import {OAS} from "./oas";
+import {OAS} from "./oas.js";
 import chalk from 'chalk';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-(await import('ts-node')).register({typeCheck: false});
 import { Command } from 'commander';
-import {generateSdkFrom} from "./sdk-mapper";
-import {generateMockFrom} from "./mock-mapper";
+import {generateSdkFrom} from "./sdk-mapper.js";
+import {generateMockFrom} from "./mock-mapper.js";
 
 const program = new Command();
 
@@ -24,7 +22,7 @@ export async function types(oas: OAS): Promise<string> {
 async function generateFromSchema(schemaLocation: string, command: any) {
   const {hydra, aws} = command;
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const schema: OAS = schemaLocation.endsWith('.ts') ? (await import(schemaLocation)).default : require(schemaLocation);
+  const schema: OAS = schemaLocation.endsWith('.ts') ? (await import(schemaLocation)).default : (await import(schemaLocation));
   const pathFinder = PathFinder.from(schema, hydra, aws);
   const args = process.argv;
   const version = args.find(it => it.startsWith('v='))?.substring(2);
@@ -43,7 +41,7 @@ async function generateFromSchema(schemaLocation: string, command: any) {
 
 async function generateMockFromSchema(schemaLocation: string) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const schema: OAS = schemaLocation.endsWith('.ts') ? require(schemaLocation).default : require(schemaLocation);
+  const schema: OAS = schemaLocation.endsWith('.ts') ? (await import(schemaLocation)).default : (await import(schemaLocation));
   const dir = 'generated/' + schema.info.title.toLowerCase().replace(/ /g, '-') + '/';
   fs.writeFileSync(dir + 'mock.ts', generateMockFrom(schema));
 }

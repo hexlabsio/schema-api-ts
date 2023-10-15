@@ -24,6 +24,9 @@
     "esm": true,
     "experimentalSpecifierResolution": "node"
   },
+  "exclude": [
+    "src/cli.ts"
+  ],
   "include": [
     "src/**/*",
   ]
