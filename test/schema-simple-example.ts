@@ -1,4 +1,4 @@
-import {OpenApiSpecificationBuilder, SchemaBuilder} from "../src";
+import {OpenApiSpecificationBuilder, SchemaBuilder} from "../dist";
 
 const builder = SchemaBuilder.create();
 

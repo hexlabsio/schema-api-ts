@@ -1,5 +1,4 @@
-import {OASServer} from "../src";
-import {OpenApiSpecificationBuilder, SchemaBuilder} from "../src";
+import {OpenApiSpecificationBuilder, SchemaBuilder, OASServer} from "../dist";
 
 const builder = SchemaBuilder.create();
 
