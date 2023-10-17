@@ -1,4 +1,4 @@
-import {OpenApiSpecificationBuilder, SchemaBuilder, OASServer} from "../dist";
+import {OpenApiSpecificationBuilder, SchemaBuilder, OASServer} from "../src";
 
 const builder = SchemaBuilder.create();
 
@@ -35,6 +35,9 @@ const schemas = builder.add('Chicken', s => s.object({
 export default OpenApiSpecificationBuilder
 .create(schemas, { title: 'Chicken Store API', version: '1.0.0'})
 .add('servers', () => servers)
+    .defaultResponses(o => ({
+      200: o.response('', o.textContent())
+    }))
 .addComponent('securitySchemes', o => ({ Auth: o.openIdConnectScheme('.well-known/xyz')}))
 .add('paths', o => ({
   '/chicken': {
@@ -83,7 +86,7 @@ export default OpenApiSpecificationBuilder
         content: o.jsonContent('ChickenCreateRequest')
       },
       responses: {
-        200: o.response('The Chicken', {...o.jsonContent('Chicken'), ...o.textContent()}, ['Location']),
+        200: o.response('The Chicken', {...o.jsonContent('Chicken'), ...o.textContent()}),
         404: o.response('Not Found', o.textContent()),
       }
     },
@@ -92,10 +95,7 @@ export default OpenApiSpecificationBuilder
       parameters: [
           o.path('chickenId'),
           o.header('X-Encryption-Key')
-      ],
-      responses: {
-        200: {description: 'Success', content: o.textContent('Deleted')},
-      }
+      ]
     },
   },
   '/schema': {

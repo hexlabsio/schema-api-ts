@@ -3,10 +3,10 @@ import {
   OASEncoding,
   OASInfo,
   OASMedia,
-  OASOAuthFlows,
-  OASParameter,
+  OASOAuthFlows, OASOperation,
+  OASParameter, OASPath, OASRef,
   OASResponse,
-  OASSecurityScheme
+  OASSecurityScheme,
 } from "./oas";
 import {OAS, OASComponents} from "./oas.js";
 
@@ -169,6 +169,8 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, 
   private constructor(public oas: OAS) {
   }
 
+  private _defaultResponses: OASOperation["responses"] = {};
+
   build(): OAS {
     return this.oas;
   }
@@ -273,6 +275,11 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, 
     return {'$ref': `#/components/${componentKey as string}/${key as string}`} as any;
   }
 
+  defaultResponses(itemBuilder: (builder: this) => Exclude<OASComponents["responses"], undefined>): this {
+    this._defaultResponses = itemBuilder(this);
+    return this
+  }
+
   addComponent<K extends keyof OASComponents, B extends (builder: this) => OASComponents[K]>(location: K, itemBuilder: B): B extends (builder: any) => infer R ? OpenApiSpecificationBuilder<S & { components: { [k in K]: R } }> : never {
     const item = itemBuilder(this);
     const current = this.oas.components ?? {};
@@ -294,13 +301,50 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, 
     return this as any;
   }
 
+  private modifyOperationWithDefaultResponses(operation?: OASOperation): OASOperation | undefined {
+    if(operation) {
+      const { responses, ...rest } = operation;
+      return {...rest, responses: { ...this._defaultResponses, ...responses } }
+    }
+  }
+  private addDefaultResponsesToPath(path: OASPath | OASRef): OASPath | OASRef {
+    if((path as OASRef).$ref) return path;
+    const {
+      get,
+      put,
+      post,
+      delete: deleteOp,
+      options,
+      head,
+      patch,
+      trace,
+        ...rest
+    } = path as OASPath;
+    return {
+      ...rest,
+      ...(get ? {get: this.modifyOperationWithDefaultResponses(get)} : {}),
+      ...(put ? {put: this.modifyOperationWithDefaultResponses(put)} : {}),
+      ...(post ? {post: this.modifyOperationWithDefaultResponses(post)} : {}),
+      ...(deleteOp ? {delete: this.modifyOperationWithDefaultResponses(deleteOp)} : {}),
+      ...(options ? {options: this.modifyOperationWithDefaultResponses(options)} : {}),
+      ...(head ? {head: this.modifyOperationWithDefaultResponses(head)} : {}),
+      ...(patch ? {patch: this.modifyOperationWithDefaultResponses(patch)} : {}),
+      ...(trace ? {trace: this.modifyOperationWithDefaultResponses(trace)} : {}),
+      ...rest
+    }
+  }
+
+  private addDefaultResponses(paths: OAS["paths"]): OAS["paths"] {
+    return Object.keys(paths).reduce((previousValue, path) => ({ ...previousValue, [path]: this.addDefaultResponsesToPath(paths[path])}), {})
+  }
+
   add<K extends keyof OAS>(location: K, itemBuilder: (builder: this) => OAS[K]): this {
     const item = itemBuilder(this);
     if (typeof item === "object") {
       if (Array.isArray(item)) {
         this.oas = {...this.oas, [location]: [...(this.oas[location] as any[] ?? []), ...item]};
       } else {
-        this.oas = {...this.oas, [location]: {...(this.oas[location] as any ?? {}), ...(item as any)}};
+        this.oas = {...this.oas, [location]: {...(this.oas[location] as any ?? {}), ...(location === "paths" ? this.addDefaultResponses(item as any) : (item as any))}};
       }
     } else {
       this.oas = {...this.oas, [location]: item};

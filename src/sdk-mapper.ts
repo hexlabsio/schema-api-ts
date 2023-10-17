@@ -89,8 +89,8 @@ export function typeFrom(oas: OAS, response: OASResponse | OASRef): [string, str
 }
 
 function returnType(oas: OAS, method: OASOperation, imports: string[]): string {
-  return Object.keys(method.responses).map(statusCode => {
-    const response = method.responses[statusCode];
+  return Object.keys(method.responses!).map(statusCode => {
+    const response = method.responses![statusCode];
     const [type, newImports] = typeFrom(oas, response);
     imports.push(...newImports);
     return `{ statusCode: ${statusCode}; result: ${type} }`;
@@ -104,8 +104,8 @@ function ifCode(code: string, json: boolean): string {
 }
 
 function bodyValue(oas: OAS, method: OASOperation): string {
-  return Object.keys(method.responses).map(statusCode => {
-    const response = method.responses[statusCode];
+  return Object.keys(method.responses!).map(statusCode => {
+    const response = method.responses![statusCode];
     const def = Object.prototype.hasOwnProperty.call(response, '$ref') ? traversePath<OASResponse>((response as OASRef)['$ref'], oas) : response as OASResponse;
     const types = Object.keys(def.content ?? {});
     const json = types[0] === 'application/json';

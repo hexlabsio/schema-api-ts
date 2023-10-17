@@ -18,8 +18,8 @@ export interface Mock {
 }
 
 export const responseFrom = (oas: OAS, method: OASOperation): [string, any] => {
-  const statusCode = Object.keys(method.responses).find(x => x)!;
-  const refResponse = method.responses[statusCode];
+  const statusCode = Object.keys(method.responses!).find(x => x)!;
+  const refResponse = method.responses![statusCode];
   const response = Object.prototype.hasOwnProperty.call(refResponse, '$ref') ? traversePath<OASResponse>((refResponse as OASRef)['$ref'], oas) : refResponse as OASResponse;
   const contentType = Object.keys(response.content ?? '')[0]
   const content = response.content ? response.content[contentType] : undefined;
