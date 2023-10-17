@@ -36,7 +36,7 @@ export default OpenApiSpecificationBuilder
 .create(schemas, { title: 'Chicken Store API', version: '1.0.0'})
 .add('servers', () => servers)
     .defaultResponses(o => ({
-      200: o.response('', o.textContent())
+      200: o.response(o.textContent())
     }))
 .addComponent('securitySchemes', o => ({ Auth: o.openIdConnectScheme('.well-known/xyz')}))
 .add('paths', o => ({
@@ -45,7 +45,7 @@ export default OpenApiSpecificationBuilder
       security: [{Auth: ['read', 'write', 'admin']}],
       operationId: 'getChickens',
       responses: {
-        200: o.response('The Flock', o.jsonContent('ChickenCollection')),
+        200: o.response(o.jsonContent('ChickenCollection'), 'The Flock'),
       }
     },
     post: {
@@ -72,7 +72,7 @@ export default OpenApiSpecificationBuilder
           o.query('someOtherQuery', false, true)
       ],
       responses: {
-        200: {description: 'The Chicken', content: o.jsonContent('Chicken')},
+        200: {content: o.jsonContent('Chicken'), description: 'The Chicken'},
       }
     },
     put: {
@@ -86,8 +86,8 @@ export default OpenApiSpecificationBuilder
         content: o.jsonContent('ChickenCreateRequest')
       },
       responses: {
-        200: o.response('The Chicken', {...o.jsonContent('Chicken'), ...o.textContent()}),
-        404: o.response('Not Found', o.textContent()),
+        200: o.response({...o.jsonContent('Chicken'), ...o.textContent()}, 'The Chicken'),
+        404: o.response( o.textContent(), 'Not Found'),
       }
     },
     delete: {
