@@ -60,7 +60,7 @@ export class Method {
           const responseTypeName = responseType?.substring(responseType?.lastIndexOf('/') + 1);
           return `json(body: Model.${responseTypeName}, headers?: {${headerParam}}): APIGatewayProxyResult`;
         } else if (contentType === 'application/text') {
-          return `text(body: string, headers?: {${headerParam}}): APIGatewayProxyResult`;
+          return `text(body = '', headers?: {${headerParam}}): APIGatewayProxyResult`;
         }
         return `['${contentType}'](body: string, headers?: {${headerParam}}): APIGatewayProxyResult`;
       });
@@ -78,9 +78,9 @@ export class Method {
           const responseTypeName = responseType?.substring(responseType?.lastIndexOf('/') + 1);
           return `json(body: Model.${responseTypeName}, headers?: {${headerParam}}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body: JSON.stringify(body), headers: { ...(headers ?? {}), ['Content-Type']: '${contentType}' } } }`;
         } else if (contentType === 'application/text') {
-          return `text(body: string, headers?: {${headerParam}}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ...(headers ?? {}), ['Content-Type']: '${contentType}' } } }`;
+          return `text(body = '', headers?: {${headerParam}}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ...(headers ?? {}), ['Content-Type']: '${contentType}' } } }`;
         }
-        return `['${contentType}'](body: string, headers?: {${headerParam}}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ...(headers ?? {}), ['Content-Type']: '${contentType}' } } }`;
+        return `['${contentType}'](body = '', headers?: {${headerParam}}): APIGatewayProxyResult { return { statusCode: ${statusCode}, body, headers: { ...(headers ?? {}), ['Content-Type']: '${contentType}' } } }`;
       });
       return `[${statusCode}]: { ${responses.join(', ')} }`;
     }).join(', ');
