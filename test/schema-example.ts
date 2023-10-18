@@ -43,7 +43,6 @@ export default OpenApiSpecificationBuilder
   '/chicken': {
     get: {
       security: [{Auth: ['read', 'write', 'admin']}],
-      operationId: 'getChickens',
       responses: {
         200: o.response(o.jsonContent('ChickenCollection'), 'The Flock'),
       }
@@ -65,7 +64,6 @@ export default OpenApiSpecificationBuilder
   },
   '/chicken/{chickenId}': {
     get: {
-      operationId: 'getChicken',
       parameters: [
           o.path('chickenId'),
           o.query('someQuery'),

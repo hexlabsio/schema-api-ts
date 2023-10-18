@@ -85,7 +85,7 @@ export class Method {
       return `[${statusCode}]: { ${responses.join(', ')} }`;
     }).join(', ');
     const handlerType = `(request: ${this.aws ? `APIGatewayProxyEvent, parts: Parts<{${singleQueries}},{${multiQueries}},{${paths}},{${singleHeaders}},{${multiHeaders}}>, respondWith: { ${returner} }` : 'Req'}) => Promise<${this.aws ? 'APIGatewayProxyResult' : 'Response'}>`;
-    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, ${this.aws ? `mapped(${singleHeaderNames}, ${multiHeaderNames},`: ''}(...params: any[]) => this.handlers.${name}?.bind(this)?.(...params, { ${returnerImplementation} }) ?? (async () => ({statusCode: 501, body: 'Not Implemented'})))${this.aws ? ')': ''}`, [name + `: ${handlerType}`]];
+    return [`${spacing}bind(HttpMethod.${this.method.toUpperCase()}, ${this.aws ? `mapped(${singleHeaderNames}, ${multiHeaderNames},`: ''}(...params: any[]) => this.handlers['${name}']?.bind(this)?.(...params, { ${returnerImplementation} }) ?? (async () => ({statusCode: 501, body: 'Not Implemented'})))${this.aws ? ')': ''}`, [`'${name}'` + `: ${handlerType}`]];
   }
 }
 

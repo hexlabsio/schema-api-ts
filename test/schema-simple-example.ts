@@ -22,7 +22,7 @@ export default OpenApiSpecificationBuilder
           o.query('someOtherQuery', false, true) // A multi string query parameter
       ],
       responses: {
-        200: o.response('A Chicken', o.jsonContent('Chicken')) // Chicken here can only be one of the defined entries in the schema
+        200: o.response(o.jsonContent('Chicken'), 'A Chicken') // Chicken here can only be one of the defined entries in the schema
       }
     },
   }
