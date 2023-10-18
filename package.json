@@ -90,7 +90,7 @@
   },
   "homepage": "https://github.com/hexlabsio/schema-api-ts#readme",
   "peerDependencies": {
-    "@hexlabs/http-api-ts": "^1.1.32",
+    "@hexlabs/http-api-ts": "^2.0.36",
     "@hexlabs/lambda-api-ts": "^0.1.12"
   },
   "devDependencies": {
