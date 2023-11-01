@@ -151,7 +151,18 @@ function sdkMethod(version: string | undefined, path: string, method: string, pa
       const resource = '${path}';
       const path = \`${resourcePath}\`;
       const versionedHeaders = ${version ? `{...headers, ['X-API-VERSION']: '${version}' }` : 'headers'};
-      const result = await this.caller.call('${method.toUpperCase()}', resource, path, ${bodyParam ? 'JSON.stringify(body)' : 'undefined'}, ${pathParams ? 'params' : '{}'}, ${queryParams ? 'queryParameters' : '{}'}, ${multiQueryParams ? 'multiQueryParameters' : '{}'}, versionedHeaders, this.server());
+      const props: CallerProps = {
+        method: '${method.toUpperCase()}',
+        resource,
+        path,
+        body: ${bodyParam ? 'JSON.stringify(body)' : 'undefined'},
+        pathParameters: ${pathParams ? 'params' : '{}'},
+        queryParameters: ${queryParams ? 'queryParameters' : '{}'},
+        multiQueryParameters: ${multiQueryParams ? 'multiQueryParameters' : '{}'},
+        headers: versionedHeaders,
+        uri: this.server()
+      }
+      const result = await this.caller.call(props);
       ${version ? versionCheck : ''}${bodyValue(oas, methodDefinition)}
       throw new Error(\`Unknown status \${result.statusCode} returned from \${path}\`)
     }`;
@@ -180,19 +191,21 @@ export function generateSdkFrom(oas: OAS, version?: string): string {
   
     return `import { ${[...new Set([...imports])].join(', ')} } from './model';
 
+export type CallerProps = {
+      method: string;
+      resource: string;
+      path: string;
+      body?: string;
+      pathParameters: Record<string, string>;
+      queryParameters: Record<string, string>;
+      multiQueryParameters: Record<string, string[]>;
+      headers: Record<string, string>;
+      uri: string;
+}
+
 export type Caller = {
-  call(
-      method: string,
-      resource: string,
-      path: string,
-      body: string | undefined,
-      pathParameters: Record<string, string>,
-      queryParameters: Record<string, string>,
-      multiQueryParameters: Record<string, string[]>,
-      headers: Record<string, string>,
-      uri?: string
-    ): Promise<{ statusCode: number; body: string; headers: Record<string, string> }>;
-  }
+  call(props: CallerProps): Promise<{ statusCode: number; body: string; headers: Record<string, string> }>;
+}
 
   
 export class ${name} {
@@ -200,10 +213,10 @@ export class ${name} {
     private readonly caller: Caller,${servers ? `\n    private readonly serverLookup?: {${serverLookupTyped.join('; ')}},\n    public readonly servers: Array<{url: string; variables: Record<string, string>}> = [${servers.join(', ')}]` : ''}
   ){}
   
-    private server(): string | undefined {
-      if(this.servers.length === 0) return undefined;
+    private server(): string {
+      if(this.servers.length === 0) return '';
       const server = !this.serverLookup ? this.servers[0] : this.servers.find(it => Object.keys(this.serverLookup!).reduce((result, key) => result && (!(this.serverLookup as any)[key] || it.variables[key] === (this.serverLookup as any)[key]), true as boolean));
-      return server && Object.keys(server.variables).reduce((url, key) => url.replace(\`{\${key}}\`, server.variables[key]), server.url);
+      return server ? Object.keys(server.variables).reduce((url, key) => url.replace(\`{\${key}}\`, server.variables[key]), server.url): '';
     }
   
 ${sdkMethods.join('\n\n')}
