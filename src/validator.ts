@@ -287,7 +287,7 @@ class ArrayValidator {
 class ObjectValidator {
   
   static objectValidation(value: any, location: string, schema: SchemaInfo): Invalid[] {
-    const valid = typeof value === 'object' && !Array.isArray(value);
+    const valid = value !== null && typeof value === 'object' && !Array.isArray(value);
     return validate(value, location, schema, () => `Expected value to be an object`, valid)
   }
   
