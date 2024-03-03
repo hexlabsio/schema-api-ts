@@ -9,6 +9,7 @@ import {
   OASSecurityScheme,
 } from "./oas";
 import {OAS, OASComponents} from "./oas.js";
+import { PathBuilder } from './path-builder';
 
 type UnionToTuple<T> = (
   (
@@ -336,6 +337,11 @@ export class OpenApiSpecificationBuilder<S extends {components: {schemas?: any, 
 
   private addDefaultResponses(paths: OAS["paths"]): OAS["paths"] {
     return Object.keys(paths).reduce((previousValue, path) => ({ ...previousValue, [path]: this.addDefaultResponsesToPath(paths[path])}), {})
+  }
+
+  route(name: string, builder: (paths: PathBuilder<S>) => PathBuilder<S>): this {
+
+    return this;
   }
 
   add<K extends keyof OAS>(location: K, itemBuilder: (builder: this) => OAS[K]): this {

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "baseUrl": ".",
-    "outDir": "./dist",
+    "outDir": "./dist/esm",
     "noUnusedLocals": true,
     "declaration": true,
     "allowSyntheticDefaultImports": false,
@@ -13,21 +13,18 @@
     "strictFunctionTypes": true,
     "allowJs": true,
     "moduleResolution": "node",
-    "module": "ES2022",
+    "module": "ESNext",
     "target": "ES2022",
     "pretty": true,
     "inlineSourceMap": false,
     "inlineSources": false,
-    "esModuleInterop": true
+    "esModuleInterop": false
   },
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"
   },
-  "exclude": [
-    "src/cli.ts"
-  ],
   "include": [
-    "src/**/*",
+    "src/**/*", "jest.config.ts"
   ]
 }

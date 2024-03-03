@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env node --loader ts-node/esm --no-warnings
 import {compile, JSONSchema} from "json-schema-to-typescript";
 import {PathFinder} from "./mapper.js";
 import * as fs from 'fs';
@@ -64,7 +64,7 @@ function generateMock(): any {
     generateMock();
     await program.parseAsync(process.argv);
   } catch(e) {
-    console.log(chalk.red(e));
+    console.log(chalk.red(e ?? 'Error'));
     process.exit(1);
   }
 })();
