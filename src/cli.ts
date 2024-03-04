@@ -1,4 +1,4 @@
-#!/usr/bin/env node --loader ts-node/esm --no-warnings
+#!/usr/bin/env -S node --loader ts-node/esm --no-warnings
 import {compile, JSONSchema} from "json-schema-to-typescript";
 import {PathFinder} from "./mapper.js";
 import * as fs from 'fs';
