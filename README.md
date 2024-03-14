@@ -6,7 +6,7 @@ It will also output a simplified definition of the paths and methods in order fo
 
 ## Features
 
-1. SDK Generation
+1. SDK Generation 
 2. API Generation with Routes using http-api-ts
 3. Type Generation
 4. Mock API Generation
