@@ -42,6 +42,7 @@ export default OpenApiSpecificationBuilder
 .add('paths', o => ({
   '/chicken': {
     get: {
+      operationId: 'getChickens',
       security: [{Auth: ['read', 'write', 'admin']}],
       responses: {
         200: o.response(o.jsonContent('ChickenCollection'), 'The Flock'),
@@ -64,6 +65,7 @@ export default OpenApiSpecificationBuilder
   },
   '/chicken/{chickenId}': {
     get: {
+      operationId: 'getChicken',
       parameters: [
           o.path('chickenId'),
           o.query('someQuery'),
@@ -97,7 +99,10 @@ export default OpenApiSpecificationBuilder
     },
   },
   '/schema': {
-    get: { responses: { 200: {description:'Schema', content: o.jsonContent('Schema') } } }
+    get: {
+      operationId: 'getSchema',
+      responses: { 200: {description:'Schema', content: o.jsonContent('Schema') } }
+    }
   }
 }))
 .build();
