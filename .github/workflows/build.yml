@@ -17,8 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set Version
-        run: npm --no-git-tag-version version 4.0.${{ github.run_number }}
+      - name: NPM Version
+        run: |
+          npm --no-git-tag-version version 4.0.${{ github.run_number }}
+          echo ## NPM Version >> $GITHUB_STEP_SUMMARY
+          echo `npm install -S @hexlabs/schema-api-ts@4.0.${{ github.run_number }}` >> $GITHUB_STEP_SUMMARY
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
