@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "version": "1.0.0",
   "bin": {
-    "schema-api-ts": "dist/esm/cli.js"
+    "schema-api-ts": "dist/esm/cli/index.js"
   },
   "types": "dist/esm/index.d.ts",
   "exports": {
@@ -26,9 +26,10 @@
   "scripts": {
     "build:esm": "tsc --project tsconfig.json && echo '{\"type\": \"module\"}' > dist/esm/package.json",
     "build:cjs": "tsc --project tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
-    "build": "npm run build:esm && npm run build:cjs && chmod +x ./dist/esm/cli.js",
-    "generate": "./dist/esm/cli.js generate -h $(pwd)/test/schema-example.ts v=1.0.0",
-    "test": "npm run generate && jest --ci --runInBand --coverage --reporters=default --reporters=jest-junit --passWithNoTests",
+    "build": "npm run build:esm && npm run build:cjs && chmod +x ./dist/esm/cli/index.js",
+    "generate:middy": "./dist/esm/cli/index.js generate --template middy --apiVersion 1.0.0 $(pwd)/test/schema-example.ts",
+    "generate:hexlabs": "./dist/esm/cli/index.js generate --template hexlabs --apiVersion 1.0.0 $(pwd)/test/schema-example.ts",
+    "test": "npm run generate:hexlabs && jest --ci --runInBand --coverage --reporters=default --reporters=jest-junit --passWithNoTests",
     "lint": "eslint **/*.ts"
   },
   "eslintConfig": {
@@ -75,7 +76,10 @@
   "jest": {
     "transform": {
       ".(ts)": [
-        "ts-jest", { "useESM": true }
+        "ts-jest",
+        {
+          "useESM": true
+        }
       ]
     },
     "preset": "ts-jest/presets/default-esm",
@@ -94,12 +98,21 @@
   },
   "homepage": "https://github.com/hexlabsio/schema-api-ts#readme",
   "peerDependencies": {
-    "@hexlabs/http-api-ts": "^2.0.36",
-    "@hexlabs/lambda-api-ts": "^0.1.12"
+    "@hexlabs/http-api-ts": "^2",
+    "@hexlabs/lambda-api-ts": "^0",
+    "@middy/core": "^5",
+    "@middy/http-json-body-parser": "^5",
+    "@middy/http-router": "^5",
+    "@middy/validator": "^5"
   },
   "devDependencies": {
     "@hexlabs/http-api-ts": "^2.0.36",
     "@types/aws-lambda": "^8.10.40",
+    "@middy/core": "^5",
+    "@middy/http-json-body-parser": "^5",
+    "@middy/http-router": "^5",
+    "@middy/validator": "^5",
+    "@types/ejs": "^3.1.5",
     "@types/jest": "^24.9.1",
     "@types/node": "^18.18.5",
     "@typescript-eslint/eslint-plugin": "^4.24.0",
@@ -116,6 +129,7 @@
   "dependencies": {
     "chalk": "^2.4.2",
     "commander": "^6.2.1",
+    "ejs": "^3.1.10",
     "json-schema-to-typescript": "^10.1.4",
     "ts-node": "^10.9.1"
   }
