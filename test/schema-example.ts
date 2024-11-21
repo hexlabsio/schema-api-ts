@@ -1,6 +1,6 @@
-import {OpenApiSpecificationBuilder, SchemaBuilder, OASServer} from "../src";
-
-const builder = SchemaBuilder.create();
+import {OpenApiSpecificationBuilder, OASServer} from "../src";
+import { ZodSchemaBuilder } from '../src/schema-builder';
+import * as model from './model';
 
 const servers: OASServer[] = [
   {
@@ -16,21 +16,11 @@ const servers: OASServer[] = [
   },
 ];
 
-const schemas = builder.add('Chicken', s => s.object({
-  identifier: s.string(),
-  type: s.string(),
-  name: s.string()
-}))
-.add('ChickenCollection', s => s.array(s.reference('Chicken')))
-.add('Schema', s => s.object(undefined, undefined, true))
-.add('ChickenCreateRequest', s => s.object({
-  type: s.string(),
-  name: s.string()
-}))
-    .add('ChickenCreateRequest2', s => s.object({}, {
-      type: s.string(),
-      name: s.string()
-    })).build();
+const schemas = ZodSchemaBuilder.create()
+  .add("Chicken", model.Chicken)
+  .add("ChickenCollection", model.ChickenCollection)
+  .add("ChickenCreateRequest", model.ChickenCreateRequest)
+  .build()
 
 export default OpenApiSpecificationBuilder
 .create(schemas, { title: 'Chicken Store API', version: '1.0.0'})
@@ -97,12 +87,6 @@ export default OpenApiSpecificationBuilder
           o.header('X-Encryption-Key')
       ]
     },
-  },
-  '/schema': {
-    get: {
-      operationId: 'getSchema',
-      responses: { 200: {description:'Schema', content: o.jsonContent('Schema') } }
-    }
   }
 }))
 .build();

@@ -32,6 +32,7 @@ function generatorFor(template: 'hexlabs' | 'middy'): ApiGenerator {
 async function generateFromSchema(schemaLocation: string, command: any) {
   const {template, apiVersion} = command;
   const schema: OAS = schemaLocation.endsWith('.ts') ? (await import(schemaLocation)).default : (await import(schemaLocation));
+  const location = schemaLocation.substring(0, schemaLocation.lastIndexOf('/'));
   const dir = 'generated/' + schema.info.title.toLowerCase().replace(/ /g, '-') + '/';
   if(!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
   const pathFinder = PathFinder.from(schema);
@@ -46,6 +47,7 @@ async function generateFromSchema(schemaLocation: string, command: any) {
   fs.writeFileSync(dir + 'schema.json', JSON.stringify({ components: { schemas: schema.components?.schemas ?? {} } }, null, 2));
   fs.writeFileSync(dir + 'oas.json', JSON.stringify(schema, null, 2));
   if(schema.servers) fs.writeFileSync(dir + 'servers.json', JSON.stringify(schema.servers, null, 2));
+  fs.writeFileSync(dir + 'zod-model.ts', fs.readFileSync(location + '/model.ts'));
   fs.writeFileSync(dir + 'model.ts', await types(schema));
   fs.writeFileSync(dir + 'sdk.ts', generateSdkFrom(schema, apiVersion));
 }
