@@ -40,7 +40,7 @@ export interface ${className}Handlers {
 
 export class ${className} {
     
-    private logger = new Logger({ serviceName: '${className}' });
+    logger = new Logger({ serviceName: '${className}' });
     
 ${this.routesFunction(routes)}
 
