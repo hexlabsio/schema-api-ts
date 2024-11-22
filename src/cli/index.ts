@@ -77,7 +77,7 @@ function generateMock(): any {
     generateMock();
     await program.parseAsync(process.argv);
   } catch(e) {
-    console.log(chalk.red(e ?? 'Error'));
+    console.log(e ?? 'Error');
     process.exit(1);
   }
 })();
