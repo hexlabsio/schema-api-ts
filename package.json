@@ -103,7 +103,7 @@
     "@middy/core": "^5",
     "@middy/http-router": "^5",
     "@aws-lambda-powertools/logger": "^2",
-    "@aws-lambda-powertools/parser": "^"
+    "@aws-lambda-powertools/parser": "^2"
   },
   "devDependencies": {
     "@aws-lambda-powertools/logger": "^2.10.0",
