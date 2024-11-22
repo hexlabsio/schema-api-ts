@@ -4,7 +4,6 @@ import { ApiGenerator } from './generators/generator';
 import { HexlabsGenerator } from './generators/hexlabs-generator';
 import * as fs from 'fs';
 import {OAS} from "../oas.js";
-import chalk from 'chalk';
 import { Command } from 'commander';
 import {generateSdkFrom} from "../sdk-mapper.js";
 import {generateMockFrom} from "../mock-mapper.js";
