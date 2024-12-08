@@ -9,7 +9,7 @@ It will also output a simplified definition of the paths and methods in order fo
 1. SDK Generation 
 2. API Generation with Routes using http-api-ts
 3. Type Generation
-4. Mock API Generation
+4. Mock API Generation 
 
 # Get Started
 Here is a simple schema with one endpoint
