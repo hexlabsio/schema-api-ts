@@ -27,8 +27,8 @@
     "build:esm": "tsc --project tsconfig.json && echo '{\"type\": \"module\"}' > dist/esm/package.json",
     "build:cjs": "tsc --project tsconfig.cjs.json && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
     "build": "npm run build:esm && npm run build:cjs && chmod +x ./dist/esm/cli/index.js",
-    "generate:middy": "./dist/esm/cli/index.js generate --template middy --apiVersion 1.0.0 $(pwd)/test/schema-example.ts",
-    "generate:hexlabs": "./dist/esm/cli/index.js generate --template hexlabs --apiVersion 1.0.0 $(pwd)/test/schema-example.ts",
+    "generate:middy": "npm run build && ./dist/esm/cli/index.js generate --template middy --apiVersion 1.0.0 $(pwd)/test/schema-example.ts",
+    "generate:hexlabs": "npm run build && ./dist/esm/cli/index.js generate --template hexlabs --apiVersion 1.0.0 $(pwd)/test/schema-example.ts",
     "test": "npm run generate:middy && jest --ci --runInBand --coverage --reporters=default --reporters=jest-junit --passWithNoTests",
     "lint": "eslint **/*.ts"
   },
@@ -116,7 +116,7 @@
     "@types/aws-lambda": "^8.10.40",
     "@types/ejs": "^3.1.5",
     "@types/jest": "^24.9.1",
-    "@types/node": "^18.18.5",
+    "@types/node": "^20.17.9",
     "@typescript-eslint/eslint-plugin": "^4.24.0",
     "@typescript-eslint/parser": "^4.24.0",
     "eslint": "^6.8.0",
@@ -126,7 +126,7 @@
     "jest-junit": "^10.0.0",
     "ts-jest": "^29.1.1",
     "tslib": "^2.6.2",
-    "typescript": "^4.7.4",
+    "typescript": "^5.7.2",
     "zod-to-json-schema": "^3.23.5"
   },
   "dependencies": {

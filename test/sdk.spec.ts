@@ -10,8 +10,7 @@ const caller: Caller = {
 describe('SDK', () => {
 
   it('should', async () => {
-    const result = await new ChickenStoreAPISdk(caller, {environment: 'prod'})
-      .getChicken({chickenId: 'id'}, {}, {});
+    const result = await new ChickenStoreAPISdk(caller, {environment: 'prod'}).getChickens()
     expect(result.headers['x-uri']).toEqual('https://api.xyz.io/views')
   })
 });

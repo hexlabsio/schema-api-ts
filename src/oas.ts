@@ -1,4 +1,5 @@
 import {JSONSchema} from 'json-schema-to-typescript'
+import { JsonSchema7Type } from 'zod-to-json-schema';
 
 export interface OAS {
   openapi: string;
@@ -11,8 +12,8 @@ export interface OAS {
   externalDocs?: OASExternalDocs;
 }
 
-export interface OASComponents {
-  schemas?: { [key: string]: JSONSchema };
+export type OASComponents = {
+  schemas?: { [key: string]: JSONSchema | JsonSchema7Type; };
   responses?: { [key: string]: OASResponse | OASRef };
   parameters?: { [key: string]: OASParameter | OASRef };
   examples?: { [key: string]: any | OASRef };
@@ -21,13 +22,15 @@ export interface OASComponents {
   securitySchemes?: { [key: string]: OASSecurityScheme | OASRef };
   links?: { [key: string]: any | OASRef };
   callbacks?: { [key: string]: OASPath | OASRef };
+  ['x-amazon-apigateway-integrations']?: any;
 }
 
 export type OASSecurityScheme = {
   description?: string;
 } & ({
   type: "oauth2";
-  flows: OASOAuthFlows;
+  flows?: OASOAuthFlows;
+  ['x-amazon-apigateway-authorizer']?: any;
 } | {
   type: "openIdConnect";
   openIdConnectUrl: string;
@@ -125,6 +128,7 @@ export interface OASOperation {
   deprecated?: boolean;
   security?: OASSecurity[];
   servers?: OASServer[];
+  ['x-amazon-apigateway-integration']?: OASRef | any;
 }
 
 export interface OASRequestBody {
