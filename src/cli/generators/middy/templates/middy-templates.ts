@@ -12,7 +12,7 @@ export function handlerMethodType(method: Method): string {
 export function route(path: Path, method: Method): string {
   return `{
       method: '${method.method.toUpperCase()}',
-      path: '/{stage}${path.pathString()}',
+      path: '${path.pathString()}',
       handler: this.${method.operationId}()
     }`;
 }

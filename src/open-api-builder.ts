@@ -73,10 +73,10 @@ export class OpenApiSpecificationBuilder<
   }
 
   get awsLambdaApiGatewayIntegration(): Record<T['apiIntegrations'][number], {'$ref': string}> {
-    const schemes = this.parts.schemes.reduce((prev, key) => {
+    const apiIntegrations = this.parts.apiIntegrations.reduce((prev, key) => {
       return {...prev, [key]: {"$ref": `#/components/x-amazon-apigateway-integrations/${key}`}}
     },{} as any) as any;
-    return schemes;
+    return apiIntegrations;
   }
 
   withPath(name: string, builder: (path: PathBuilder, oas: this) => PathBuilder): this {
