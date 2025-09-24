@@ -50,7 +50,7 @@ export class OpenApiSpecificationBuilder<
     return this.addComponent('securitySchemes', () => ({ [key]: scheme })) as any;
   }
 
-  withAWSLambdaApiGatewayIntegration<K extends string>(key: K, functionUri: string, payloadFormatVersion: '1.0' | '2.0' = '1.0', passthroughBehavior: 'when_no_templates' | 'when_no_match' | 'never' = 'when_no_templates')
+  withAWSLambdaApiGatewayIntegration<const K extends string>(key: K, functionUri: string, payloadFormatVersion: '1.0' | '2.0' = '1.0', passthroughBehavior: 'when_no_templates' | 'when_no_match' | 'never' = 'when_no_templates')
     : OpenApiSpecificationBuilder<S, { schemes: T['schemes'], apiIntegrations: [...T['apiIntegrations'], K],  }> {
     const scheme = {
       type: "aws_proxy",

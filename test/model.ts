@@ -16,3 +16,9 @@ export const ChickenCreateRequest = z.object({
 });
 
 export type ChickenCreateRequest = z.infer<typeof ChickenCreateRequest>
+
+export const OtherRequest = z.object({
+  item: z.union([Chicken, ChickenCollection])
+});
+
+export type OtherRequest = z.infer<typeof OtherRequest>

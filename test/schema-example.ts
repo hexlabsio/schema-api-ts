@@ -17,6 +17,7 @@ const servers: OASServer[] = [
 
 const schemas = ZodSchemaBuilder.create()
   .add("Chicken", model.Chicken)
+  .add("OtherRequest", model.OtherRequest)
   .add("ChickenCollection", model.ChickenCollection)
   .add("ChickenCreateRequest", model.ChickenCreateRequest)
   .build()
@@ -25,6 +26,15 @@ export default OpenApiSpecificationBuilder.create(schemas, { title: 'Chicken Sto
   .add('servers', oas => servers)
   .withAWSCognitoSecurityScheme('Cognito', '${ENDPOINT}', '${CLIENT}')
   .withAWSLambdaApiGatewayIntegration('apiHandler', '${API_HANDLER}')
+  .withPath('other', (path, oas) =>
+    path.get('getOther', {
+      'x-amazon-apigateway-integration': oas.awsLambdaApiGatewayIntegration.apiHandler,
+      security: [oas.securitySchemes.Cognito()],
+      responses: {
+        200: oas.jsonResponse('OtherRequest')
+      }
+    }
+    ))
   .withPath('chicken', (path, oas) =>
     path.get('getChickens', {
         'x-amazon-apigateway-integration': oas.awsLambdaApiGatewayIntegration.apiHandler,
