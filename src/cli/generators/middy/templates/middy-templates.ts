@@ -2,7 +2,7 @@ import { Method } from '../../../paths/method';
 import { Path } from '../../../paths/path';
 
 function eventType(method: Method): string {
-  return method.requestType ? `z.infer<typeof ${method.requestType}Event>` : 'APIGatewayEvent';
+  return method.requestType ? `{ success?: boolean; error?: z.ZodError, data: z.infer<typeof ${method.requestType}Event> }` : 'APIGatewayEvent';
 }
 
 export function handlerMethodType(method: Method): string {
