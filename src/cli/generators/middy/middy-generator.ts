@@ -20,7 +20,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import { parser } from '@aws-lambda-powertools/parser/middleware';
 import { Route } from '@middy/http-router';
 import { APIGatewayEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import schema from './schema.json' with { type: 'json' };
+import schema from './schema.json';
 import * as model from './zod-model';
 import * as z from 'zod';`
   }
