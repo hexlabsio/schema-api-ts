@@ -31,7 +31,7 @@ import * as z from 'zod';`
 `${this.imports()}
 
 ${[...new Set(operations.filter(it => !!it.method.requestType).map(it => it.method.requestType))]
-  .map(requestType => `const ${requestType}Event = APIGatewayProxyEventSchema.extend({ detail: model.${requestType} });`)
+  .map(requestType => `const ${requestType}Event = APIGatewayProxyEventSchema.extend({ detail: model.${requestType}, success: z.boolean() });`)
   .join('\n')}
 
 export interface ${className}Handlers {

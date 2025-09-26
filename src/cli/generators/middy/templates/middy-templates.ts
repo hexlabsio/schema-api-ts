@@ -19,7 +19,7 @@ export function route(path: Path, method: Method): string {
 
 export function handlerFunction(method: Method): string {
 
-  const validator = method.requestType ? `.use(parser({ schema: ${method.requestType}Event }))\n      `: '';
+  const validator = method.requestType ? `.use(parser({ schema: ${method.requestType}Event, safeParse: true }))\n      `: '';
   return '' +
     `${method.operationId}() {
     return middy()
