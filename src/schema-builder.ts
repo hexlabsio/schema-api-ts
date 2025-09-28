@@ -10,7 +10,9 @@ export class ZodSchemaBuilder<R extends Record<string, JsonSchema7Type>> {
   }
 
   add<S extends string, T extends z.ZodType>(name: S, type: T): ZodSchemaBuilder<R & {[name in S]: JsonSchema7Type}> {
-    this.schemas[name] = (zodToJsonSchema(type, {name, basePath: ['#','components', 'schemas'], '$refStrategy': 'none' }).definitions as any)[name];
+    this.schemas[name] = (zodToJsonSchema(type, {name, basePath: ['#','components', 'schemas'], '$refStrategy': 'root', postProcess: s => {
+      return JSON.parse(JSON.stringify(s).replaceAll('#/components/schemas/definitions/', '#/components/schemas/'))
+      } }).definitions as any)[name];
     this.schemas[name].title = name;
     return this as any;
   }
