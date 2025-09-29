@@ -17,9 +17,9 @@ const servers: OASServer[] = [
 
 const schemas = ZodSchemaBuilder.create()
   .add("Chicken", model.Chicken)
-  .add("OtherRequest", model.OtherRequest)
   .add("ChickenCollection", model.ChickenCollection)
   .add("ChickenCreateRequest", model.ChickenCreateRequest)
+  .add("OtherRequest", model.OtherRequest)
   .build()
 
 export default OpenApiSpecificationBuilder.create(schemas, { title: 'Chicken Store API', version: '1.0.0'})
